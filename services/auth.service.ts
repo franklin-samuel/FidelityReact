@@ -5,6 +5,7 @@ import type {
     AuthResponse,
     RefreshTokenRequest,
 } from '@/types/auth';
+import type { User } from '@/types/user';
 
 export const authService = {
     login: async (credentials: LoginRequest): Promise<AuthResponse> => {
@@ -47,6 +48,11 @@ export const authService = {
             );
         }
 
+        return response.data!;
+    },
+
+    getMe: async (): Promise<User> => {
+        const response = await httpClient.get<User>('/me');
         return response.data!;
     },
 

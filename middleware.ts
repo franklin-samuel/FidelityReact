@@ -1,26 +1,30 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
+const publicRoutes = [
+    { path: '/login', whenAuthenticated: 'redirect' },
+]
 
-    const accessToken = request.cookies.get('access_token')?.value;
-    const refreshToken = request.cookies.get('refresh_token')?.value;
+const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = "/login"
 
-    const isAuthenticated = !!(accessToken && refreshToken);
+export default function middleware(request: NextRequest) {
+    const path = request.nextUrl.pathname
+    const publicRoute = publicRoutes.find(route => route.path === path)
 
-    if (pathname === '/login') {
-        if (isAuthenticated) {
-            return NextResponse.redirect(new URL('/', request.url));
-        }
-        return NextResponse.next();
+    const authToken = request.cookies.get("access_token")
+
+    if (!authToken && !publicRoute) {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE
+        return NextResponse.redirect(redirectUrl)
     }
 
-    if (!isAuthenticated) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    if (authToken && publicRoute && publicRoute.whenAuthenticated === 'redirect') {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = "/"
+        return NextResponse.redirect(redirectUrl)
     }
 
-    return NextResponse.next();
+    return NextResponse.next()
 }
 
 export const config = {
@@ -31,8 +35,7 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - public folder
          */
         '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
-};
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { AdminCard } from '@/components/app/AdminCard'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useUsers, useCreateUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -21,9 +22,13 @@ export default function AdminsPage() {
 
     const { data: users, isLoading } = useUsers();
     const { mutate: createUser, isPending } = useCreateUser();
+    const { user: currentUser, refetch } = useAuth();
 
-    // Por enquanto vou usar um valor fixo para demonstração
-    const currentUserEmail = 'samuelfranklin@gmail.com';
+    useEffect(() => {
+        if (!currentUser) {
+            refetch();
+        }
+    }, [currentUser, refetch]);
 
     const handleCreateAdmin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,7 +89,7 @@ export default function AdminsPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {admins.map((admin) => {
-                                const isCurrentUser = admin.email === currentUserEmail;
+                                const isCurrentUser = currentUser?.email === admin.email;
                                 const formattedDate = format(new Date(admin.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
                                 return (

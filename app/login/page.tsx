@@ -1,24 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLogin } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
-    const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const { mutate: login, isPending } = useLogin();
+    const { login, isLoading } = useAuth();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        login({
-            username: email,
-            password
-        });
+        try {
+            await login({
+                username: email,
+                password
+            });
+        } catch (error) {
+            console.error('Login failed:', error);
+        }
     };
 
     return (
@@ -79,9 +82,9 @@ export default function LoginPage() {
                             variant="primary"
                             size="lg"
                             className="w-full"
-                            disabled={isPending}
+                            disabled={isLoading}
                         >
-                            {isPending ? 'Entrando...' : 'Entrar'}
+                            {isLoading ? 'Entrando...' : 'Entrar'}
                         </Button.Root>
                     </form>
                 </div>

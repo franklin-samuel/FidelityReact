@@ -1,14 +1,13 @@
-// components/app/Sidebar.tsx
 'use client';
 
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useLogout } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Sidebar() {
     const router = useRouter();
     const pathname = usePathname();
-    const logout = useLogout();
+    const { logout } = useAuth();
 
     const navItems = [
         {
