@@ -1,26 +1,28 @@
+import Cookies from 'js-cookie';
+
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const tokenManager = {
-    getAccessToken: (): string | null => {
-        return localStorage.getItem(ACCESS_TOKEN_KEY);
+    getAccessToken: (): string | undefined => {
+        return Cookies.get(ACCESS_TOKEN_KEY);
     },
 
-    getRefreshToken: (): string | null => {
-        return localStorage.getItem(REFRESH_TOKEN_KEY);
+    getRefreshToken: (): string | undefined => {
+        return Cookies.get(REFRESH_TOKEN_KEY);
     },
 
     setTokens: (accessToken: string, refreshToken: string): void => {
-        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+        Cookies.set(ACCESS_TOKEN_KEY, accessToken, { expires: 7 });
+        Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { expires: 7 });
     },
 
     clearTokens: (): void => {
-        localStorage.removeItem(ACCESS_TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        Cookies.remove(ACCESS_TOKEN_KEY);
+        Cookies.remove(REFRESH_TOKEN_KEY);
     },
 
     hasTokens: (): boolean => {
         return !!(tokenManager.getAccessToken() && tokenManager.getRefreshToken());
     },
-}
+};
