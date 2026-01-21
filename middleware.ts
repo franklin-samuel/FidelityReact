@@ -2,18 +2,22 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const accessToken = request.cookies.get('access_token')?.value;
     const { pathname } = request.nextUrl;
 
-    const publicRoutes = ['/login'];
-    const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+    const accessToken = request.cookies.get('access_token')?.value;
+    const refreshToken = request.cookies.get('refresh_token')?.value;
 
-    if (!accessToken && !isPublicRoute) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    const isAuthenticated = !!(accessToken && refreshToken);
+
+    if (pathname === '/login') {
+        if (isAuthenticated) {
+            return NextResponse.redirect(new URL('/', request.url));
+        }
+        return NextResponse.next();
     }
 
-    if (accessToken && isPublicRoute) {
-        return NextResponse.redirect(new URL('/', request.url));
+    if (!isAuthenticated) {
+        return NextResponse.redirect(new URL('/login', request.url));
     }
 
     return NextResponse.next();
@@ -21,6 +25,14 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - public folder
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 };
