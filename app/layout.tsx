@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "BarberClub - Sistema de Fidelidade",
+    title: "NaGaragem - Sistema de Fidelidade",
     description: "Sistema de fidelidade para barbearias",
 };
 
