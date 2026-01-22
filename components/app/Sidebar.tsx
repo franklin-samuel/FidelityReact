@@ -1,14 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export function Sidebar() {
     const router = useRouter();
     const pathname = usePathname();
     const { logout } = useAuth();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isMobileMenuOpen]);
 
     const navItems = [
         {
@@ -54,54 +70,153 @@ export function Sidebar() {
         logout();
     };
 
+    const handleNavigation = (path: string) => {
+        router.push(path);
+        setIsMobileMenuOpen(false);
+    };
+
     return (
-        <aside className="w-64 h-screen bg-zinc-900 dark:bg-black flex flex-col fixed left-0 top-0">
-            {/* Logo */}
-            <div className="p-6 flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                    </svg>
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:flex w-64 h-screen bg-zinc-900 dark:bg-black flex-col fixed left-0 top-0 z-40">
+                {/* Logo */}
+                <div className="p-6 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                        </svg>
+                    </div>
+                    <span className="text-xl font-bold text-white">
+                        Na<span className="text-amber-500">Garagem</span>
+                    </span>
                 </div>
-                <span className="text-xl font-bold text-white">
-                    Na<span className="text-amber-500">Garagem</span>
-                </span>
-            </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 px-4 space-y-1">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.path;
+                {/* Navigation */}
+                <nav className="flex-1 px-4 space-y-1">
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.path;
 
-                    return (
-                        <button
-                            key={item.path}
-                            onClick={() => router.push(item.path)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                                isActive
-                                    ? 'bg-zinc-800 dark:bg-zinc-900 text-amber-500'
-                                    : 'text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100'
-                            }`}
-                        >
-                            <span className="w-5 h-5">{item.icon}</span>
-                            <span className="font-medium">{item.name}</span>
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={item.path}
+                                onClick={() => router.push(item.path)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                    isActive
+                                        ? 'bg-zinc-800 dark:bg-zinc-900 text-amber-500'
+                                        : 'text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100'
+                                }`}
+                            >
+                                <span className="w-5 h-5">{item.icon}</span>
+                                <span className="font-medium">{item.name}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-zinc-800 dark:border-zinc-900">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span className="font-medium">Sair</span>
+                    </button>
+                </div>
+            </aside>
+
+            {/* Mobile Navbar */}
+            <nav className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-900 dark:bg-black border-b border-zinc-800 dark:border-zinc-900">
+                <div className="flex items-center justify-between p-4">
+                    {/* Logo */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                            </svg>
+                        </div>
+                        <span className="text-lg font-bold text-white">
+                            Na<span className="text-amber-500">Garagem</span>
+                        </span>
+                    </div>
+
+                    {/* Menu Button */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        className="p-2 text-zinc-400 hover:text-zinc-100 transition-colors"
+                        aria-label="Abrir menu"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
             </nav>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-zinc-800 dark:border-zinc-900 space-y-2">
-                <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span className="font-medium">Sair</span>
-                </button>
-            </div>
-        </aside>
+            {/* Mobile Menu Drawer */}
+            {isMobileMenuOpen && (
+                <>
+                    {/* Overlay */}
+                    <div
+                        className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-fade-in"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+
+                    {/* Drawer */}
+                    <div className="lg:hidden fixed top-0 right-0 bottom-0 w-64 bg-zinc-900 dark:bg-black z-50 flex flex-col animate-slide-in-right">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-zinc-800 dark:border-zinc-900">
+                            <span className="text-lg font-bold text-white">Menu</span>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 text-zinc-400 hover:text-zinc-100 transition-colors"
+                                aria-label="Fechar menu"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Navigation */}
+                        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+                            {navItems.map((item) => {
+                                const isActive = pathname === item.path;
+
+                                return (
+                                    <button
+                                        key={item.path}
+                                        onClick={() => handleNavigation(item.path)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                            isActive
+                                                ? 'bg-zinc-800 dark:bg-zinc-900 text-amber-500'
+                                                : 'text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100'
+                                        }`}
+                                    >
+                                        <span className="w-5 h-5">{item.icon}</span>
+                                        <span className="font-medium">{item.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+
+                        {/* Footer */}
+                        <div className="p-4 border-t border-zinc-800 dark:border-zinc-900">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                <span className="font-medium">Sair</span>
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+        </>
     );
 }

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface LayoutRootProps {
@@ -31,7 +30,7 @@ interface LayoutMainProps {
 
 const LayoutMain: React.FC<LayoutMainProps> = ({ children }) => {
     return (
-        <div className="ml-64 flex-1">
+        <div className="lg:ml-64 flex-1 w-full">
             {children}
         </div>
     );
@@ -43,7 +42,7 @@ interface LayoutContentProps {
 
 const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     return (
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
             <div className="max-w-7xl mx-auto">
                 {children}
             </div>
@@ -59,14 +58,14 @@ interface LayoutHeaderProps {
 
 const LayoutHeader: React.FC<LayoutHeaderProps> = ({ title, description, actions }) => {
     return (
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 lg:mb-8">
             <div>
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">{title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">{title}</h1>
                 {description && (
-                    <p className="text-zinc-600 dark:text-zinc-400">{description}</p>
+                    <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">{description}</p>
                 )}
             </div>
-            {actions && <div>{actions}</div>}
+            {actions && <div className="flex-shrink-0">{actions}</div>}
         </div>
     );
 };
