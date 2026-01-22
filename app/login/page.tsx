@@ -125,7 +125,7 @@ export default function LoginPage() {
                         >
                             {isLoading ? (
                                 <>
-                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent mr-2"></div>
                                     Entrando...
                                 </>
                             ) : (

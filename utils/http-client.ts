@@ -5,7 +5,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://fidelity-api.on
 
 interface RequestConfig extends RequestInit {
     skipAuth?: boolean;
+    skipToast?: boolean;
 }
+
+let toastCallback: ((message: string, type: 'success' | 'error') => void) | null = null;
+
+export const setToastCallback = (callback: (message: string, type: 'success' | 'error') => void) => {
+    toastCallback = callback;
+};
 
 class HttpClient {
     private isRefreshing = false;
@@ -40,7 +47,7 @@ class HttpClient {
             }
 
             const data = await response.json();
-            const { access_token, refresh_token } = data;
+            const { access_token, refresh_token } = data.data;
 
             tokenManager.setTokens(access_token, refresh_token);
             return access_token;
@@ -55,7 +62,7 @@ class HttpClient {
         endpoint: string,
         config: RequestConfig = {}
     ): Promise<ApiResponse<T>> {
-        const { skipAuth = false, headers = {}, ...restConfig } = config;
+        const { skipAuth = false, skipToast = false, headers = {}, ...restConfig } = config;
 
         const url = `${API_BASE_URL}${endpoint}`;
         const accessToken = tokenManager.getAccessToken();
@@ -85,11 +92,9 @@ class HttpClient {
 
                     if (newToken) {
                         this.onTokenRefreshed(newToken);
-                        // Retry original request com novo token
                         return this.request<T>(endpoint, config);
                     }
                 } else {
-                    // Aguardar refresh em andamento
                     return new Promise((resolve) => {
                         this.subscribeTokenRefresh(() => {
                             resolve(this.request<T>(endpoint, config));
@@ -101,17 +106,32 @@ class HttpClient {
             const data: ApiResponse<T> = await response.json();
 
             if (!response.ok) {
-                new Error(data.error || 'Request failed');
+                const errorMessage = data.error || 'Ocorreu um erro inesperado';
+
+                if (!skipToast && toastCallback) {
+                    toastCallback(errorMessage, 'error');
+                }
+
+                const error = new Error(errorMessage);
+                (error as any).isHandled = true;
+                throw error;
+            }
+
+            if (!skipToast && data.message && toastCallback && restConfig.method !== 'GET') {
+                toastCallback(data.message, 'success');
             }
 
             return data;
         } catch (error) {
+            if (!skipToast && toastCallback && error instanceof Error && !(error as any).isHandled) {
+                toastCallback('Erro de conexão. Tente novamente.', 'error');
+            }
             throw error;
         }
     }
 
     async get<T>(endpoint: string, config?: RequestConfig): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { ...config, method: 'GET' });
+        return this.request<T>(endpoint, { ...config, method: 'GET', skipToast: true });
     }
 
     async post<T>(

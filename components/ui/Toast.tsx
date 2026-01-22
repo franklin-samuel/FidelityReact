@@ -1,0 +1,134 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export interface ToastProps {
+    id: string;
+    message: string;
+    type: ToastType;
+    duration?: number;
+    onClose: () => void;
+}
+
+export function Toast({ id, message, type, duration = 5000, onClose }: ToastProps) {
+    const [isExiting, setIsExiting] = useState(false);
+    const [progress, setProgress] = useState(100);
+
+    useEffect(() => {
+        const startTime = Date.now();
+        const interval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+            setProgress(remaining);
+
+            if (remaining === 0) {
+                clearInterval(interval);
+            }
+        }, 10);
+
+        const timer = setTimeout(() => {
+            setIsExiting(true);
+            setTimeout(onClose, 300);
+        }, duration);
+
+        return () => {
+            clearTimeout(timer);
+            clearInterval(interval);
+        };
+    }, [duration, onClose]);
+
+    const handleClose = () => {
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    const typeStyles = {
+        success: 'bg-white dark:bg-zinc-900 border-green-200 dark:border-green-900',
+        error: 'bg-white dark:bg-zinc-900 border-red-200 dark:border-red-900',
+        info: 'bg-white dark:bg-zinc-900 border-blue-200 dark:border-blue-900',
+        warning: 'bg-white dark:bg-zinc-900 border-amber-200 dark:border-amber-900'
+    };
+
+    const iconColors = {
+        success: 'text-green-600 dark:text-green-400',
+        error: 'text-red-600 dark:text-red-400',
+        info: 'text-blue-600 dark:text-blue-400',
+        warning: 'text-amber-600 dark:text-amber-400'
+    };
+
+    const progressColors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-amber-500'
+    };
+
+    const icons = {
+        success: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+        error: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+        info: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+        warning: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        )
+    };
+
+    return (
+        <div
+            className={`
+        relative min-w-[320px] max-w-md rounded-lg border shadow-lg overflow-hidden
+        ${typeStyles[type]}
+        ${isExiting ? 'animate-slide-out-right' : 'animate-slide-in-right'}
+      `}
+            role="alert"
+        >
+            {/* Progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-200 dark:bg-zinc-800">
+                <div
+                    className={`h-full transition-all ease-linear ${progressColors[type]}`}
+                    style={{ width: `${progress}%` }}
+                />
+            </div>
+
+            {/* Content */}
+            <div className="flex items-start gap-3 p-4">
+                <div className={iconColors[type]}>
+                    {icons[type]}
+                </div>
+
+                <div className="flex-1 pt-0.5">
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 leading-relaxed">
+                        {message}
+                    </p>
+                </div>
+
+                <button
+                    onClick={handleClose}
+                    className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors flex-shrink-0"
+                    aria-label="Fechar"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Adicionar animações ao globals.css
