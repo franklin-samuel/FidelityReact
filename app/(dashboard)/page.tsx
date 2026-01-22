@@ -4,11 +4,11 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
-import { MetricCard } from '@/components/app/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useDashboardMetrics } from '@/hooks/useDashboard';
 import { useSettings } from '@/hooks/useSettings';
+import { DashboardSkeleton } from '@/components/app/DashboardSkeleton';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -21,12 +21,7 @@ export default function DashboardPage() {
                 <Sidebar />
                 <Layout.Main>
                     <Layout.Content>
-                        <div className="flex items-center justify-center h-96">
-                            <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
-                                <p className="text-zinc-600 dark:text-zinc-400">Carregando...</p>
-                            </div>
-                        </div>
+                        <DashboardSkeleton />
                     </Layout.Content>
                 </Layout.Main>
             </Layout.Root>

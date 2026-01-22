@@ -11,6 +11,7 @@ import { useUsers, useCreateUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { AdminPageSkeleton } from '@/components/app/AdminSkeleton';
 
 export default function AdminsPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -47,12 +48,7 @@ export default function AdminsPage() {
                 <Sidebar />
                 <Layout.Main>
                     <Layout.Content>
-                        <div className="flex items-center justify-center h-96">
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="h-12 w-12 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
-                                <p className="text-zinc-600 dark:text-zinc-400 animate-pulse">Carregando administradores...</p>
-                            </div>
-                        </div>
+                        <AdminPageSkeleton />
                     </Layout.Content>
                 </Layout.Main>
             </Layout.Root>

@@ -81,7 +81,13 @@ interface CustomerCardClaimedProps {
 }
 
 const CustomerCardClaimed: React.FC<CustomerCardClaimedProps> = ({ count }) => {
-    if (count === 0) return null;
+    if (count === 0) {
+        return (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Nenhum corte grátis resgatado
+            </p>
+        )
+    }
 
     return (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">

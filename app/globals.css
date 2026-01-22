@@ -25,6 +25,16 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+@layer base {
+    button {
+        @apply cursor-pointer;
+    }
+
+    button:disabled {
+        @apply cursor-not-allowed;
+    }
+}
+
 /* Animações Customizadas */
 @layer utilities {
     /* Fade In Animation */

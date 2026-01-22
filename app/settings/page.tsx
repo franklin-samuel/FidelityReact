@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings';
+import { SettingsSkeleton } from '@/components/app/SettingsSkeleton';
 
 export default function SettingsPage() {
     const [haircutsForFree, setHaircutsForFree] = useState<number>(10);
@@ -45,12 +46,7 @@ export default function SettingsPage() {
                 <Sidebar />
                 <Layout.Main>
                     <Layout.Content>
-                        <div className="flex items-center justify-center h-96">
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="h-12 w-12 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
-                                <p className="text-zinc-600 dark:text-zinc-400 animate-pulse">Carregando configurações...</p>
-                            </div>
-                        </div>
+                        <SettingsSkeleton />
                     </Layout.Content>
                 </Layout.Main>
             </Layout.Root>

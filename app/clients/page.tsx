@@ -328,7 +328,7 @@ export default function ClientsPage() {
                                     <Button.Root type="submit" disabled={creating}>
                                         {creating ? (
                                             <>
-                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent mr-2"></div>
                                                 Salvando...
                                             </>
                                         ) : (
@@ -393,7 +393,7 @@ export default function ClientsPage() {
                                 >
                                     {registering ? (
                                         <>
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent mr-2"></div>
                                             Registrando...
                                         </>
                                     ) : (
