@@ -18,7 +18,7 @@ export const useSearchCustomers = (searchTerm: string) => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedTerm(searchTerm);
-        }, 500);
+        }, 0);
 
         return () => clearTimeout(timer);
     }, [searchTerm]);

@@ -101,7 +101,7 @@ class HttpClient {
             const data: ApiResponse<T> = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Request failed');
+                new Error(data.error || 'Request failed');
             }
 
             return data;

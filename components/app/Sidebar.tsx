@@ -63,7 +63,7 @@ export function Sidebar() {
                     </svg>
                 </div>
                 <span className="text-xl font-bold text-white">
-          Barber<span className="text-amber-500">Club</span>
+          Na<span className="text-amber-500">Garagem</span>
         </span>
             </div>
 

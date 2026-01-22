@@ -34,10 +34,10 @@ export default function LoginPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
                         </svg>
                     </div>
-                    <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                        Barber<span className="text-amber-500">Club</span>
+                    <h1 className="text-5xl font-bold text-zinc-900 dark:text-zinc-50">
+                        Na<span className="text-amber-500">Garagem</span>
                     </h1>
-                    <p className="text-zinc-600 dark:text-zinc-400 mt-2">Sistema de Fidelidade</p>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-lg mt-2">Sistema de Fidelidade</p>
                 </div>
 
                 {/* Card */}

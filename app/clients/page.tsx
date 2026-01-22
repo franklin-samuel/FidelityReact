@@ -30,7 +30,7 @@ export default function ClientsPage() {
     const { mutate: createCustomer, isPending: creating } = useCreateCustomer();
     const { mutate: registerHaircut, isPending: registering } = useRegisterHaircut();
 
-    const haircutsForFree = settings?.haircuts_for_free || 11;
+    const haircutsForFree = settings?.haircuts_for_free || 10;
 
     const customers = searchTerm.length > 0
         ? searchResults
