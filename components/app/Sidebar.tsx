@@ -92,10 +92,6 @@ export function Sidebar() {
 
             {/* Footer */}
             <div className="p-4 border-t border-zinc-800 dark:border-zinc-900 space-y-2">
-                <div className="flex items-center justify-between px-4 py-2">
-                    <span className="text-sm text-zinc-400">Tema</span>
-                    <ThemeToggle />
-                </div>
                 <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-800 dark:hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
