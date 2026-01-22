@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface ButtonRootProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,13 +14,13 @@ const ButtonRoot: React.FC<ButtonRootProps> = ({
                                                    disabled,
                                                    ...props
                                                }) => {
-    const baseStyles = 'rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2';
+    const baseStyles = 'rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 button-press';
 
     const variantStyles = {
-        primary: 'bg-zinc-900 text-white hover:bg-zinc-800 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100',
+        primary: 'bg-zinc-900 text-white hover:bg-zinc-800 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 hover:scale-105',
         secondary: 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700',
-        success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-600',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600'
+        success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-600 glow-green hover:scale-105',
+        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600 hover:scale-105'
     };
 
     const sizeStyles = {
