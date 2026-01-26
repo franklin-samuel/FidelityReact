@@ -20,17 +20,23 @@ const AdminCardRoot: React.FC<AdminCardRootProps> = ({ children, isCurrentUser =
 interface AdminCardHeaderProps {
     name: string;
     isCurrentUser?: boolean;
+    actions?: React.ReactNode;
 }
 
-const AdminCardHeader: React.FC<AdminCardHeaderProps> = ({ name, isCurrentUser = false }) => {
+const AdminCardHeader: React.FC<AdminCardHeaderProps> = ({ name, isCurrentUser = false, actions }) => {
     return (
         <div className="flex items-start justify-between">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{name}</h3>
-            {isCurrentUser && (
-                <span className="px-3 py-1 bg-amber-500 text-white text-sm font-medium rounded-full">
-          Você
-        </span>
-            )}
+            <div className="flex-1">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{name}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+                {isCurrentUser && (
+                    <span className="px-3 py-1 bg-amber-500 text-white text-sm font-medium rounded-full">
+                        Você
+                    </span>
+                )}
+                {actions}
+            </div>
         </div>
     );
 };

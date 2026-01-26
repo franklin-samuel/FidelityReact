@@ -10,3 +10,7 @@ export interface CreateUserRequest {
     email: string;
     password: string;
 }
+
+export interface DeleteUserRequest {
+    email_confirmation: string;
+}

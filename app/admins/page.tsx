@@ -7,14 +7,20 @@ import { AdminCard } from '@/components/app/AdminCard';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { useUsers, useCreateUser } from '@/hooks/useUser';
+import { Dropdown } from '@/components/ui/Dropdown';
+import { useUsers, useCreateUser, useDeleteUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AdminPageSkeleton } from '@/components/app/AdminSkeleton';
+import type { User } from '@/types/user';
 
 export default function AdminsPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null);
+    const [emailConfirmation, setEmailConfirmation] = useState('');
+
     const [newAdmin, setNewAdmin] = useState({
         name: '',
         email: '',
@@ -22,7 +28,8 @@ export default function AdminsPage() {
     });
 
     const { data: users, isLoading } = useUsers();
-    const { mutate: createUser, isPending } = useCreateUser();
+    const { mutate: createUser, isPending: creating } = useCreateUser();
+    const { mutate: deleteUser, isPending: deleting } = useDeleteUser();
     const { user: currentUser, refetch } = useAuth();
 
     useEffect(() => {
@@ -40,6 +47,38 @@ export default function AdminsPage() {
                 setNewAdmin({ name: '', email: '', password: '' });
             }
         });
+    };
+
+    const handleDeleteClick = (admin: User) => {
+        setSelectedAdmin(admin);
+        setIsDeleteModalOpen(true);
+        setEmailConfirmation('');
+    };
+
+    const handleDeleteConfirm = () => {
+        if (!selectedAdmin) return;
+
+        deleteUser(
+            {
+                userId: selectedAdmin.id,
+                data: { email_confirmation: emailConfirmation }
+            },
+            {
+                onSuccess: () => {
+                    setIsDeleteModalOpen(false);
+                    setSelectedAdmin(null);
+                    setEmailConfirmation('');
+                }
+            }
+        );
+    };
+
+    const handleCloseDeleteModal = () => {
+        if (!deleting) {
+            setIsDeleteModalOpen(false);
+            setSelectedAdmin(null);
+            setEmailConfirmation('');
+        }
     };
 
     if (isLoading) {
@@ -114,7 +153,32 @@ export default function AdminsPage() {
                                             style={{ animationDelay: `${index * 50}ms` }}
                                         >
                                             <AdminCard.Root isCurrentUser={isCurrentUser}>
-                                                <AdminCard.Header name={admin.name} isCurrentUser={isCurrentUser} />
+                                                <AdminCard.Header
+                                                    name={admin.name}
+                                                    isCurrentUser={isCurrentUser}
+                                                    actions={
+                                                        !isCurrentUser && (
+                                                            <Dropdown.Root>
+                                                                <Dropdown.Trigger>
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                                    </svg>
+                                                                </Dropdown.Trigger>
+                                                                <Dropdown.Content>
+                                                                    <Dropdown.Item
+                                                                        variant="danger"
+                                                                        onClick={() => handleDeleteClick(admin)}
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                        Deletar
+                                                                    </Dropdown.Item>
+                                                                </Dropdown.Content>
+                                                            </Dropdown.Root>
+                                                        )
+                                                    }
+                                                />
 
                                                 <div className="space-y-1.5">
                                                     <AdminCard.Info
@@ -163,7 +227,7 @@ export default function AdminsPage() {
                                                 value={newAdmin.name}
                                                 onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
                                                 required
-                                                disabled={isPending}
+                                                disabled={creating}
                                             />
                                         </Input.Root>
 
@@ -176,7 +240,7 @@ export default function AdminsPage() {
                                                 value={newAdmin.email}
                                                 onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                                                 required
-                                                disabled={isPending}
+                                                disabled={creating}
                                             />
                                         </Input.Root>
 
@@ -189,7 +253,7 @@ export default function AdminsPage() {
                                                 value={newAdmin.password}
                                                 onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                                                 required
-                                                disabled={isPending}
+                                                disabled={creating}
                                             />
                                         </Input.Root>
                                     </div>
@@ -200,12 +264,12 @@ export default function AdminsPage() {
                                         type="button"
                                         variant="secondary"
                                         onClick={() => setIsCreateModalOpen(false)}
-                                        disabled={isPending}
+                                        disabled={creating}
                                     >
                                         Cancelar
                                     </Button.Root>
-                                    <Button.Root type="submit" disabled={isPending}>
-                                        {isPending ? (
+                                    <Button.Root type="submit" disabled={creating}>
+                                        {creating ? (
                                             <>
                                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
                                                 Salvando...
@@ -216,6 +280,84 @@ export default function AdminsPage() {
                                     </Button.Root>
                                 </Modal.Footer>
                             </form>
+                        </Modal.Content>
+                    </Modal.Root>
+
+                    {/* Delete Admin Modal */}
+                    <Modal.Root open={isDeleteModalOpen} onClose={handleCloseDeleteModal}>
+                        <Modal.Content>
+                            <Modal.Header onClose={handleCloseDeleteModal}>
+                                Confirmar Exclusão
+                            </Modal.Header>
+
+                            <Modal.Body>
+                                {selectedAdmin && (
+                                    <div className="space-y-4">
+                                        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5">
+                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">
+                                                        Atenção: Esta ação não pode ser desfeita!
+                                                    </h4>
+                                                    <p className="text-sm text-red-800 dark:text-red-300">
+                                                        Você está prestes a deletar o administrador{' '}
+                                                        <strong>{selectedAdmin.name}</strong>.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Input.Root>
+                                            <Input.Label htmlFor="email-confirmation" required>
+                                                Para confirmar, digite o email do administrador
+                                            </Input.Label>
+                                            <Input.Field
+                                                id="email-confirmation"
+                                                type="email"
+                                                placeholder={selectedAdmin.email}
+                                                value={emailConfirmation}
+                                                onChange={(e) => setEmailConfirmation(e.target.value)}
+                                                disabled={deleting}
+                                                autoFocus
+                                            />
+                                        </Input.Root>
+                                    </div>
+                                )}
+                            </Modal.Body>
+
+                            <Modal.Footer>
+                                <Button.Root
+                                    variant="secondary"
+                                    onClick={handleCloseDeleteModal}
+                                    disabled={deleting}
+                                >
+                                    Cancelar
+                                </Button.Root>
+                                <Button.Root
+                                    variant="danger"
+                                    onClick={handleDeleteConfirm}
+                                    disabled={deleting || emailConfirmation !== selectedAdmin?.email}
+                                >
+                                    {deleting ? (
+                                        <>
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                                            Deletando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Deletar Administrador
+                                        </>
+                                    )}
+                                </Button.Root>
+                            </Modal.Footer>
                         </Modal.Content>
                     </Modal.Root>
                 </Layout.Content>
