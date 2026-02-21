@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '@/services/customer.service';
 import type { CreateCustomerRequest, UpdateCustomerRequest } from '@/types/customer';
-import { useState, useEffect } from 'react';
+import { useDebounce } from './useDebounce';
 
 export const CUSTOMER_QUERY_KEY = 'customers';
 
@@ -12,27 +12,18 @@ export const useCustomers = () => {
     });
 };
 
-export const useSearchCustomers = (searchTerm: string) => {
-    const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedTerm(searchTerm);
-        }, 0);
-
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
+export const useSearchCustomers = (query: string) => {
+    const debouncedQuery = useDebounce(query, 300);
 
     return useQuery({
-        queryKey: [CUSTOMER_QUERY_KEY, 'search', debouncedTerm],
-        queryFn: () => customerService.search(debouncedTerm),
-        enabled: debouncedTerm.length > 0,
+        queryKey: [CUSTOMER_QUERY_KEY, 'search', debouncedQuery],
+        queryFn: () => customerService.search(debouncedQuery),
+        enabled: debouncedQuery.length >= 2,
     });
 };
 
 export const useCreateCustomer = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
         mutationFn: (data: CreateCustomerRequest) => customerService.create(data),
         onSuccess: () => {
@@ -43,7 +34,6 @@ export const useCreateCustomer = () => {
 
 export const useUpdateCustomer = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: UpdateCustomerRequest }) =>
             customerService.update(id, data),
