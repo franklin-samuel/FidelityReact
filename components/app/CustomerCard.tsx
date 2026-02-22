@@ -84,14 +84,14 @@ const CustomerCardClaimed: React.FC<CustomerCardClaimedProps> = ({ count }) => {
     if (count === 0) {
         return (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Nenhum corte grátis resgatado
+                Nenhum desconto resgatado
             </p>
         )
     }
 
     return (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {count} corte{count !== 1 ? 's' : ''} grátis já resgatado{count !== 1 ? 's' : ''}
+            {count} desconto{count !== 1 ? 's' : ''} já resgatado{count !== 1 ? 's' : ''}
         </p>
     );
 };

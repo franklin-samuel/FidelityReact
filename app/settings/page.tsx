@@ -104,7 +104,7 @@ export default function SettingsPage() {
                                                     <span className="text-zinc-600 dark:text-zinc-400">cortes</span>
                                                 </div>
                                                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-                                                    Quando um cliente atingir este número de cortes, ele ganhará um serviço com 50% OFF
+                                                    Quando um cliente atingir este número de serviços, ele ganhará um serviço com 50% OFF
                                                 </p>
                                             </Input.Root>
 
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                                                 </h4>
                                                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
                                                     Com <span className="font-semibold text-amber-500">{haircutsForFree}</span>{' '}
-                                                    cortes configurados, o cliente pagará por {haircutsForFree} cortes e o{' '}
+                                                    serviços configurados, o cliente pagará por {haircutsForFree} cortes e o{' '}
                                                     {haircutsForFree + 1}º será <span className="font-black">50% OFF</span>.
                                                 </p>
                                             </div>
