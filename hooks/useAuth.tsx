@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import type { LoginRequest } from '@/types/auth';
@@ -20,11 +20,12 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const fetchUser = useCallback(async () => {
         if (!authService.isAuthenticated()) {
             setUser(null);
+            setIsLoading(false);
             return;
         }
 
@@ -40,6 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
         setIsLoading(true);
@@ -68,17 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (
         <AuthContext.Provider
             value={{
-        user,
-            isLoading,
-            isAuthenticated,
-            login,
-            logout,
-            refetch,
-    }}
->
-    {children}
-    </AuthContext.Provider>
-);
+                user,
+                isLoading,
+                isAuthenticated,
+                login,
+                logout,
+                refetch,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
