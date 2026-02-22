@@ -19,7 +19,7 @@ const PAYMENT_LABELS: Record<string, string> = {
     DEBIT: 'Débito',
 };
 
-function AppointmentRow({ appointment }: { appointment: Appointment }) {
+function AppointmentRow({ appointment, isAdmin }: { appointment: Appointment; isAdmin: boolean }) {
     const isService = appointment.type === 'SERVICE';
     const hasDiscount = appointment.loyalty_discount_applied;
 
@@ -60,22 +60,30 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
             </div>
 
             <div className="flex items-center gap-6 text-sm">
+
                 <div className="text-center">
-                    <p className="text-xs text-zinc-400">Pagamento</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                        {PAYMENT_LABELS[appointment.payment_method] ?? appointment.payment_method}
-                    </p>
+                    <p className="text-xs text-zinc-400">Gorjeta</p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-50">{formatCurrency(appointment.tip)}</p>
                 </div>
-                {appointment.tip > 0 && (
-                    <div className="text-center">
-                        <p className="text-xs text-zinc-400">Gorjeta</p>
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{formatCurrency(appointment.tip)}</p>
-                    </div>
-                )}
+
                 <div className="text-center">
                     <p className="text-xs text-zinc-400">Comissão</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-50">{formatCurrency(appointment.commission_amount)}</p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-50">{appointment.commission_percentage}%</p>
                 </div>
+
+                {!isAdmin && appointment.barber_total !== undefined && (
+                    <div className="text-center">
+                        <p className="text-xs text-zinc-400">Meu Total</p>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{formatCurrency(appointment.barber_total)}</p>
+                    </div>
+                )}
+
+                {isAdmin && appointment.barbershop_revenue !== undefined && (
+                    <div className="text-center">
+                        <p className="text-xs text-zinc-400">Receita</p>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-50">{formatCurrency(appointment.barbershop_revenue)}</p>
+                    </div>
+                )}
                 <div className="text-center min-w-[80px]">
                     <p className="text-xs text-zinc-400">Total</p>
                     <p className={`font-bold text-base ${hasDiscount ? 'text-green-600 dark:text-green-400' : 'text-zinc-900 dark:text-zinc-50'}`}>
@@ -133,7 +141,7 @@ export default function AppointmentsPage() {
                                         className="animate-fade-in"
                                         style={{ animationDelay: `${index * 30}ms` }}
                                     >
-                                        <AppointmentRow appointment={appointment} />
+                                        <AppointmentRow appointment={appointment} isAdmin={isAdmin} />
                                     </div>
                                 ))}
                             </div>
