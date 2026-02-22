@@ -192,7 +192,7 @@ export default function ClientsPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {customers.map((customer, index) => {
-                                    const isFreeReady = customer.haircut_count >= haircutsForFree;
+                                    const isFreeReady = customer.service_count >= haircutsForFree;
 
                                     return (
                                         <div
@@ -226,37 +226,11 @@ export default function ClientsPage() {
                                                 </div>
 
                                                 <CustomerCard.Progress
-                                                    current={customer.haircut_count}
+                                                    current={customer.service_count}
                                                     total={haircutsForFree}
                                                 />
 
-                                                <CustomerCard.Claimed count={customer.free_haircuts_claimed} />
-
-                                                <CustomerCard.Actions>
-                                                    <button
-                                                        onClick={() => handleRegisterHaircut(customer)}
-                                                        disabled={registering}
-                                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all button-press ${
-                                                            isFreeReady
-                                                                ? 'bg-green-600 text-white hover:bg-green-700 glow-green'
-                                                                : 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100'
-                                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                    >
-                                                        {registering && selectedCustomer?.id === customer.id ? (
-                                                            <>
-                                                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                                                                Registrando...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                                                                </svg>
-                                                                {isFreeReady ? 'Registrar Grátis' : 'Registrar Corte'}
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </CustomerCard.Actions>
+                                                <CustomerCard.Claimed count={customer.discounts_claimed} />
                                             </CustomerCard.Root>
                                         </div>
                                     );
@@ -355,7 +329,7 @@ export default function ClientsPage() {
                                             <span className="font-semibold">{selectedCustomer.name}</span>?
                                         </p>
 
-                                        {selectedCustomer.haircut_count >= haircutsForFree && (
+                                        {selectedCustomer.service_count >= haircutsForFree && (
                                             <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-lg p-4 animate-fade-in">
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5">
@@ -387,7 +361,7 @@ export default function ClientsPage() {
                                     Cancelar
                                 </Button.Root>
                                 <Button.Root
-                                    variant={selectedCustomer && selectedCustomer.haircut_count >= haircutsForFree ? 'success' : 'primary'}
+                                    variant={selectedCustomer && selectedCustomer.service_count >= haircutsForFree ? 'success' : 'primary'}
                                     onClick={confirmRegisterHaircut}
                                     disabled={registering}
                                 >

@@ -76,7 +76,7 @@ export default function SettingsPage() {
                                         <div>
                                             <Card.Title>Programa de Fidelidade</Card.Title>
                                             <Card.Description>
-                                                Defina quantos cortes são necessários para ganhar um grátis
+                                                Defina quantos serviços são necessários para ganhar 50% OFF
                                             </Card.Description>
                                         </div>
                                     </div>
@@ -87,7 +87,7 @@ export default function SettingsPage() {
                                         <div className="space-y-6">
                                             <Input.Root>
                                                 <Input.Label htmlFor="haircuts">
-                                                    Cortes para ganhar um grátis
+                                                    Serviços para ganhar 50% FREE
                                                 </Input.Label>
                                                 <div className="flex items-center gap-4">
                                                     <Input.Field
@@ -104,7 +104,7 @@ export default function SettingsPage() {
                                                     <span className="text-zinc-600 dark:text-zinc-400">cortes</span>
                                                 </div>
                                                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-                                                    Quando um cliente atingir este número de cortes, ele ganhará um corte grátis
+                                                    Quando um cliente atingir este número de cortes, ele ganhará um serviço com 50% OFF
                                                 </p>
                                             </Input.Root>
 
@@ -119,7 +119,7 @@ export default function SettingsPage() {
                                                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
                                                     Com <span className="font-semibold text-amber-500">{haircutsForFree}</span>{' '}
                                                     cortes configurados, o cliente pagará por {haircutsForFree} cortes e o{' '}
-                                                    {haircutsForFree + 1}º será grátis.
+                                                    {haircutsForFree + 1}º será <span className="font-black">50% OFF</span>.
                                                 </p>
                                             </div>
 
