@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import type { LoginRequest } from '@/types/auth';
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = useCallback(() => {
         authService.logout();
         setUser(null);
+
+        queryClient.clear();
+
         router.push('/login');
     }, [router]);
 
