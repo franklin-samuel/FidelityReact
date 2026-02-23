@@ -6,74 +6,18 @@ import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { StatCard } from '@/components/app/StatCard';
+import { LineChart, BarChart, PieChart } from '@/components/app/Charts';
 import { useDashboardMetrics } from '@/hooks/useDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdminMetrics, type AdminDashboardMetrics, type BarberDashboardMetrics } from '@/types/dashboard';
-import {
-    LineChart,
-    Line,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Legend,
-} from 'recharts';
+import { formatCurrency, formatCurrencyShort } from '@/utils/formatter';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value ?? 0);
-
-const formatCurrencyShort = (value: number) => {
-    if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}k`;
-    return `R$ ${value?.toFixed(0)}`;
-};
-
-function MetricBox({
-                       label,
-                       value,
-                       highlight,
-                       sub,
-                   }: {
-    label: string;
-    value: string;
-    highlight?: boolean;
-    sub?: string;
-}) {
-    return (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-1">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-            <p className={`text-2xl font-bold ${highlight ? 'text-amber-500' : 'text-zinc-900 dark:text-zinc-50'}`}>
-                {value}
-            </p>
-            {sub && <p className="text-xs text-zinc-400">{sub}</p>}
-        </div>
-    );
-}
-
-function CustomTooltip({ active, payload, label }: any) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 shadow-lg text-sm">
-            <p className="text-zinc-500 mb-1">{label}</p>
-            {payload.map((p: any, i: number) => (
-                <p key={i} style={{ color: p.color }} className="font-semibold">
-                    {p.name}: {formatCurrency(p.value)}
-                </p>
-            ))}
-        </div>
-    );
-}
+import { Skeleton } from '@/components/ui/Loading';
 
 function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
     const router = useRouter();
-
     const growth = metrics.monthly_growth_percentage ?? 0;
     const growthPositive = growth >= 0;
 
@@ -91,7 +35,6 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
         { name: 'Serviços', value: Number(metrics.services_revenue ?? 0) },
         { name: 'Produtos', value: Number(metrics.products_revenue ?? 0) },
     ];
-    const PIE_COLORS = ['#f59e0b', '#6366f1'];
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -113,13 +56,19 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
 
             {/* Revenue Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <MetricBox label="Faturamento Hoje" value={formatCurrency(Number(metrics.today_revenue))} />
-                <MetricBox label="Esta Semana" value={formatCurrency(Number(metrics.week_revenue))} />
-                <MetricBox
+                <StatCard
+                    label="Faturamento Hoje"
+                    value={formatCurrency(Number(metrics.today_revenue))}
+                />
+                <StatCard
+                    label="Esta Semana"
+                    value={formatCurrency(Number(metrics.week_revenue))}
+                />
+                <StatCard
                     label="Este Mês"
                     value={formatCurrency(Number(metrics.month_revenue))}
                     highlight
-                    sub={`${growthPositive ? '+' : ''}${growth?.toFixed(1)}% vs mês anterior`}
+                    subtitle={`${growthPositive ? '+' : ''}${growth?.toFixed(1)}% vs mês anterior`}
                 />
             </div>
 
@@ -132,23 +81,14 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
                     {chartData.length === 0 ? (
                         <p className="text-sm text-zinc-400 text-center py-8">Sem dados suficientes</p>
                     ) : (
-                        <ResponsiveContainer width="100%" height={240}>
-                            <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                                <YAxis tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} width={64} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Line
-                                    type="monotone"
-                                    dataKey="value"
-                                    name="Faturamento"
-                                    stroke="#f59e0b"
-                                    strokeWidth={2}
-                                    dot={false}
-                                    activeDot={{ r: 4 }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <LineChart
+                            data={chartData}
+                            dataKey="value"
+                            xAxisKey="date"
+                            name="Faturamento"
+                            formatYAxis={formatCurrencyShort}
+                            formatTooltip={formatCurrency}
+                        />
                     )}
                 </Card.Body>
             </Card.Root>
@@ -164,18 +104,16 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
                         </Card.Description>
                     </Card.Header>
                     <Card.Body>
-                        <ResponsiveContainer width="100%" height={180}>
-                            <BarChart data={monthCompare} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                <YAxis tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} width={64} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Bar dataKey="value" name="Faturamento" radius={[6, 6, 0, 0]}>
-                                    <Cell fill="#a1a1aa" />
-                                    <Cell fill="#f59e0b" />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <BarChart
+                            data={monthCompare}
+                            dataKey="value"
+                            xAxisKey="name"
+                            name="Faturamento"
+                            color={['#a1a1aa', '#f59e0b']}
+                            height={180}
+                            formatYAxis={formatCurrencyShort}
+                            formatTooltip={formatCurrency}
+                        />
                     </Card.Body>
                 </Card.Root>
 
@@ -189,26 +127,16 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
                         {breakdown.every((b) => b.value === 0) ? (
                             <p className="text-sm text-zinc-400 py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={180}>
-                                <PieChart>
-                                    <Pie
-                                        data={breakdown}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={75}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        paddingAngle={3}
-                                    >
-                                        {breakdown.map((_, i) => (
-                                            <Cell key={i} fill={PIE_COLORS[i]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v: any) => formatCurrency(v)} />
-                                    <Legend iconType="circle" iconSize={10} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <PieChart
+                                data={breakdown}
+                                dataKey="value"
+                                nameKey="name"
+                                colors={['#f59e0b', '#6366f1']}
+                                innerRadius={50}
+                                outerRadius={75}
+                                height={180}
+                                formatTooltip={formatCurrency}
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
@@ -218,7 +146,7 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
             {metrics.top_barbers && metrics.top_barbers.length > 0 && (
                 <Card.Root>
                     <Card.Header>
-                        <Card.Title>Top Barbeiros do mês</Card.Title>
+                        <Card.Title>Top Vendedores do mês</Card.Title>
                     </Card.Header>
                     <Card.Body className="p-0">
                         <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -258,7 +186,6 @@ function BarberDashboard({ metrics }: { metrics: BarberDashboardMetrics }) {
         { name: 'Comissão', value: commission },
         { name: 'Gorjetas', value: tips },
     ];
-    const PIE_COLORS = ['#f59e0b', '#22c55e'];
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -270,9 +197,19 @@ function BarberDashboard({ metrics }: { metrics: BarberDashboardMetrics }) {
 
             {/* Earnings Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <MetricBox label="Meus Ganhos Hoje" value={formatCurrency(Number(metrics.today_earnings))} />
-                <MetricBox label="Esta Semana" value={formatCurrency(Number(metrics.week_earnings))} />
-                <MetricBox label="Este Mês" value={formatCurrency(Number(metrics.month_earnings))} highlight />
+                <StatCard
+                    label="Meus Ganhos Hoje"
+                    value={formatCurrency(Number(metrics.today_earnings))}
+                />
+                <StatCard
+                    label="Esta Semana"
+                    value={formatCurrency(Number(metrics.week_earnings))}
+                />
+                <StatCard
+                    label="Este Mês"
+                    value={formatCurrency(Number(metrics.month_earnings))}
+                    highlight
+                />
             </div>
 
             {/* Line Chart */}
@@ -284,23 +221,14 @@ function BarberDashboard({ metrics }: { metrics: BarberDashboardMetrics }) {
                     {chartData.length === 0 ? (
                         <p className="text-sm text-zinc-400 text-center py-8">Sem dados suficientes</p>
                     ) : (
-                        <ResponsiveContainer width="100%" height={240}>
-                            <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                                <YAxis tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} width={64} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Line
-                                    type="monotone"
-                                    dataKey="value"
-                                    name="Ganhos"
-                                    stroke="#f59e0b"
-                                    strokeWidth={2}
-                                    dot={false}
-                                    activeDot={{ r: 4 }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <LineChart
+                            data={chartData}
+                            dataKey="value"
+                            xAxisKey="date"
+                            name="Ganhos"
+                            formatYAxis={formatCurrencyShort}
+                            formatTooltip={formatCurrency}
+                        />
                     )}
                 </Card.Body>
             </Card.Root>
@@ -313,19 +241,19 @@ function BarberDashboard({ metrics }: { metrics: BarberDashboardMetrics }) {
                         Meu desempenho este mês
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
-                        <MetricBox
+                        <StatCard
                             label="Atendimentos"
                             value={String(metrics.month_appointments ?? 0)}
                         />
-                        <MetricBox
+                        <StatCard
                             label="Ticket Médio"
                             value={formatCurrency(Number(metrics.month_average_ticket))}
                         />
-                        <MetricBox
+                        <StatCard
                             label="Comissão"
                             value={formatCurrency(Number(metrics.month_commission))}
                         />
-                        <MetricBox
+                        <StatCard
                             label="Gorjetas"
                             value={formatCurrency(Number(metrics.month_tips))}
                         />
@@ -342,26 +270,16 @@ function BarberDashboard({ metrics }: { metrics: BarberDashboardMetrics }) {
                         {commission === 0 && tips === 0 ? (
                             <p className="text-sm text-zinc-400 py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={180}>
-                                <PieChart>
-                                    <Pie
-                                        data={donutData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={75}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        paddingAngle={3}
-                                    >
-                                        {donutData.map((_, i) => (
-                                            <Cell key={i} fill={PIE_COLORS[i]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v: any) => formatCurrency(v)} />
-                                    <Legend iconType="circle" iconSize={10} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <PieChart
+                                data={donutData}
+                                dataKey="value"
+                                nameKey="name"
+                                colors={['#f59e0b', '#22c55e']}
+                                innerRadius={50}
+                                outerRadius={75}
+                                height={180}
+                                formatTooltip={formatCurrency}
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
@@ -374,18 +292,18 @@ function DashboardSkeleton() {
     return (
         <div className="space-y-6">
             <div className="space-y-2">
-                <div className="h-9 w-48 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
-                <div className="h-5 w-64 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+                <Skeleton width="12rem" height="2.25rem" />
+                <Skeleton width="16rem" height="1.25rem" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                    <Skeleton key={i} height="6rem" className="rounded-xl" />
                 ))}
             </div>
-            <div className="h-72 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            <Skeleton height="18rem" className="rounded-xl" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-56 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
-                <div className="h-56 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                <Skeleton height="14rem" className="rounded-xl" />
+                <Skeleton height="14rem" className="rounded-xl" />
             </div>
         </div>
     );

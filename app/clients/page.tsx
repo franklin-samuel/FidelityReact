@@ -5,71 +5,16 @@ import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { CustomerCard } from '@/components/app/CustomerCard';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { CollapsibleSection } from '@/components/app/CollapsibleSection';
 import { CardSkeleton } from '@/components/ui/Loading';
 import { useCustomers, useSearchCustomers, useCreateCustomer } from '@/hooks/useCustomer';
 import { useBarbers } from '@/hooks/useBarber';
 import { useSettings } from '@/hooks/useSettings';
 import type { Customer, Gender, ReferralSource, PreferredFrequency, PreferredStyle } from '@/types/customer';
-
-interface SelectFieldProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-    children: React.ReactNode;
-}
-
-function SelectField({ className = '', children, ...props }: SelectFieldProps) {
-    return (
-        <select
-            className={`w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-zinc-900 dark:focus:border-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-            {...props}
-        >
-            {children}
-        </select>
-    );
-}
-
-// Componente de seção colapsável
-interface CollapsibleSectionProps {
-    title: string;
-    subtitle?: string;
-    isOpen: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-}
-
-function CollapsibleSection({ title, subtitle, isOpen, onToggle, children }: CollapsibleSectionProps) {
-    return (
-        <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-            <button
-                type="button"
-                onClick={onToggle}
-                className="w-full px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-                <div className="text-left">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
-                    {subtitle && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{subtitle}</p>
-                    )}
-                </div>
-                <svg
-                    className={`w-5 h-5 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
-            {isOpen && (
-                <div className="p-4 bg-white dark:bg-zinc-900 animate-fade-in">
-                    {children}
-                </div>
-            )}
-        </div>
-    );
-}
-
-const EMPTY = '';
 
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
     { value: 'MALE', label: 'Masculino' },
@@ -153,7 +98,6 @@ export default function ClientsPage() {
     const { mutate: createCustomer, isPending: creating } = useCreateCustomer();
 
     const haircutsForFree = settings?.haircuts_for_free || 10;
-
     const customers = searchTerm.length > 0 ? searchResults : allCustomers;
 
     React.useEffect(() => {
@@ -294,21 +238,17 @@ export default function ClientsPage() {
 
                         {/* Grid */}
                         {!hasCustomers ? (
-                            <div className="text-center py-16 animate-fade-in">
-                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                            <EmptyState
+                                icon={
                                     <svg className="w-10 h-10 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
-                                </div>
-                                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
-                                    {searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
-                                </h3>
-                                <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-                                    {searchTerm
-                                        ? `Nenhum resultado para "${searchTerm}". Tente outro termo.`
-                                        : 'Comece adicionando seu primeiro cliente ao sistema'}
-                                </p>
-                            </div>
+                                }
+                                title={searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+                                description={searchTerm
+                                    ? `Nenhum resultado para "${searchTerm}". Tente outro termo.`
+                                    : 'Comece adicionando seu primeiro cliente ao sistema'}
+                            />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {customers!.map((customer, index) => {
@@ -351,14 +291,14 @@ export default function ClientsPage() {
                         )}
                     </div>
 
+                    {/* Create Modal */}
                     <Modal.Root open={isCreateModalOpen} onClose={closeModal}>
                         <Modal.Content className="slide-in-down max-w-2xl max-h-[90vh] overflow-y-auto">
                             <Modal.Header onClose={closeModal}>Novo Cliente</Modal.Header>
                             <form onSubmit={handleCreate}>
                                 <Modal.Body>
                                     <div className="space-y-4">
-
-                                        {/* ── Campos obrigatórios sempre visíveis ── */}
+                                        {/* Campos obrigatórios */}
                                         <div className="space-y-3">
                                             <Input.Root>
                                                 <Input.Label htmlFor="name" required>Nome completo</Input.Label>
@@ -401,7 +341,7 @@ export default function ClientsPage() {
                                             </div>
                                         </div>
 
-                                        {/* ── Seção: Perfil (Colapsável) ── */}
+                                        {/* Seção: Perfil */}
                                         <CollapsibleSection
                                             title="Informações de Perfil"
                                             subtitle="Dados demográficos e redes sociais (opcional)"
@@ -420,9 +360,9 @@ export default function ClientsPage() {
                                                             disabled={creating}
                                                         />
                                                     </Input.Root>
-                                                    <Input.Root>
-                                                        <Input.Label htmlFor="gender">Gênero</Input.Label>
-                                                        <SelectField
+                                                    <Select.Root>
+                                                        <Select.Label htmlFor="gender">Gênero</Select.Label>
+                                                        <Select.Field
                                                             id="gender"
                                                             value={form.gender}
                                                             onChange={set('gender')}
@@ -432,8 +372,8 @@ export default function ClientsPage() {
                                                             {GENDER_OPTIONS.map((o) => (
                                                                 <option key={o.value} value={o.value}>{o.label}</option>
                                                             ))}
-                                                        </SelectField>
-                                                    </Input.Root>
+                                                        </Select.Field>
+                                                    </Select.Root>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <Input.Root>
@@ -460,7 +400,7 @@ export default function ClientsPage() {
                                             </div>
                                         </CollapsibleSection>
 
-                                        {/* ── Seção: Preferências (Colapsável) ── */}
+                                        {/* Seção: Preferências */}
                                         <CollapsibleSection
                                             title="Preferências de Atendimento"
                                             subtitle="Ajuda a personalizar o serviço (opcional)"
@@ -469,9 +409,9 @@ export default function ClientsPage() {
                                         >
                                             <div className="space-y-3">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    <Input.Root>
-                                                        <Input.Label htmlFor="referral">Como nos conheceu?</Input.Label>
-                                                        <SelectField
+                                                    <Select.Root>
+                                                        <Select.Label htmlFor="referral">Como nos conheceu?</Select.Label>
+                                                        <Select.Field
                                                             id="referral"
                                                             value={form.referral_source}
                                                             onChange={set('referral_source')}
@@ -481,11 +421,11 @@ export default function ClientsPage() {
                                                             {REFERRAL_OPTIONS.map((o) => (
                                                                 <option key={o.value} value={o.value}>{o.label}</option>
                                                             ))}
-                                                        </SelectField>
-                                                    </Input.Root>
-                                                    <Input.Root>
-                                                        <Input.Label htmlFor="frequency">Frequência</Input.Label>
-                                                        <SelectField
+                                                        </Select.Field>
+                                                    </Select.Root>
+                                                    <Select.Root>
+                                                        <Select.Label htmlFor="frequency">Frequência</Select.Label>
+                                                        <Select.Field
                                                             id="frequency"
                                                             value={form.preferred_frequency}
                                                             onChange={set('preferred_frequency')}
@@ -495,13 +435,13 @@ export default function ClientsPage() {
                                                             {FREQUENCY_OPTIONS.map((o) => (
                                                                 <option key={o.value} value={o.value}>{o.label}</option>
                                                             ))}
-                                                        </SelectField>
-                                                    </Input.Root>
+                                                        </Select.Field>
+                                                    </Select.Root>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    <Input.Root>
-                                                        <Input.Label htmlFor="style">Estilo preferido</Input.Label>
-                                                        <SelectField
+                                                    <Select.Root>
+                                                        <Select.Label htmlFor="style">Estilo preferido</Select.Label>
+                                                        <Select.Field
                                                             id="style"
                                                             value={form.preferred_style}
                                                             onChange={set('preferred_style')}
@@ -511,11 +451,11 @@ export default function ClientsPage() {
                                                             {STYLE_OPTIONS.map((o) => (
                                                                 <option key={o.value} value={o.value}>{o.label}</option>
                                                             ))}
-                                                        </SelectField>
-                                                    </Input.Root>
-                                                    <Input.Root>
-                                                        <Input.Label htmlFor="barber">Barbeiro preferido</Input.Label>
-                                                        <SelectField
+                                                        </Select.Field>
+                                                    </Select.Root>
+                                                    <Select.Root>
+                                                        <Select.Label htmlFor="barber">Barbeiro preferido</Select.Label>
+                                                        <Select.Field
                                                             id="barber"
                                                             value={form.preferred_barber_id}
                                                             onChange={set('preferred_barber_id')}
@@ -525,12 +465,11 @@ export default function ClientsPage() {
                                                             {(barbers ?? []).map((b) => (
                                                                 <option key={b.id} value={b.id}>{b.name}</option>
                                                             ))}
-                                                        </SelectField>
-                                                    </Input.Root>
+                                                        </Select.Field>
+                                                    </Select.Root>
                                                 </div>
                                             </div>
                                         </CollapsibleSection>
-
                                     </div>
                                 </Modal.Body>
 

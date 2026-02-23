@@ -4,129 +4,45 @@ import React from 'react';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { Card } from '@/components/ui/Card';
+import { StatCard } from '@/components/app/StatCard';
+import { BarChart, PieChart } from '@/components/app/Charts';
 import { useAnalyticsData } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/Loading';
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Legend,
-} from 'recharts';
-import {ReferralSource} from "@/types/customer";
-
-
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value ?? 0);
-
-const formatCurrencyShort = (value: number) => {
-    if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}k`;
-    return `R$ ${value?.toFixed(0)}`;
-};
-
-const GENDER_LABELS: Record<string, string> = {
-    MALE: 'Masculino',
-    FEMALE: 'Feminino',
-    OTHER: 'Outro',
-    NOT_INFORMED: 'Não informado',
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-    INSTAGRAM: 'Instagram',
-    INDICATION: 'Indicação',
-    GOOGLE: 'Google',
-    FACEBOOK: 'Facebook',
-    OUTDOOR: 'Outdoor',
-    WALKING: 'Passando na frente',
-    OTHERS: 'Outros',
-    NOT_INFORMED: 'Não informado',
-};
-
-const STYLE_LABELS: Record<string, string> = {
-    LOW_FADE: 'Low Fade',
-    MEDIUM_FADE: 'Medium Fade',
-    HIGH_FADE: 'High Fade',
-    TAPER_FADE: 'Taper Fade',
-    BALD: 'Careca / Navalhado',
-    SOCIAL: 'Social',
-    CLASSIC: 'Clássico',
-    OTHERS: 'Outros',
-    NOT_INFORMED: 'Não informado',
-};
-
-const FREQUENCY_LABELS: Record<string, string> = {
-    SEMANAL: 'Semanal',
-    QUINZENAL: 'Quinzenal',
-    MENSAL: 'Mensal',
-    BIMENSAL: 'Bimensal',
-    TRIMENSAL: 'Trimestral',
-    NOT_INFORMED: 'Não informado',
-};
-
-function CustomTooltip({ active, payload, label }: any) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 shadow-lg text-sm">
-            <p className="text-zinc-500 mb-1">{label}</p>
-            {payload.map((p: any, i: number) => (
-                <p key={i} style={{ color: p.color }} className="font-semibold">
-                    {p.name}: {typeof p.value === 'number' && p.value > 100
-                    ? p.name.toLowerCase().includes('ticket') || p.name.toLowerCase().includes('r$')
-                        ? formatCurrency(p.value)
-                        : p.value
-                    : p.value}
-                </p>
-            ))}
-        </div>
-    );
-}
-
-function CurrencyTooltip({ active, payload, label }: any) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 shadow-lg text-sm">
-            <p className="text-zinc-500 mb-1">{label}</p>
-            {payload.map((p: any, i: number) => (
-                <p key={i} style={{ color: p.color }} className="font-semibold">
-                    {p.name}: {formatCurrency(p.value)}
-                </p>
-            ))}
-        </div>
-    );
-}
-
+    formatCurrency,
+    formatCurrencyShort,
+    getGenderLabel,
+    getReferralSourceLabel,
+    getStyleLabel,
+    getFrequencyLabel,
+} from '@/utils/formatter';
 
 const PALETTE = ['#f59e0b', '#6366f1', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
 
 function OverviewCards({ data }: { data: any }) {
     const retentionPct = ((data.retention_rate ?? 0) * 100).toFixed(1);
-    const items = [
-        { label: 'Total de Clientes', value: String(data.total_customers ?? 0) },
-        { label: 'Ticket Médio', value: formatCurrency(Number(data.average_ticket ?? 0)) },
-        { label: 'Receita Total', value: formatCurrency(Number(data.total_revenue ?? 0)) },
-        { label: 'Taxa de Retenção', value: `${retentionPct}%` },
-    ];
 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {items.map((item, i) => (
-                <div
-                    key={i}
-                    className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5"
-                >
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">{item.label}</p>
-                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-1">{item.value}</p>
-                </div>
-            ))}
+            <StatCard
+                label="Total de Clientes"
+                value={String(data.total_customers ?? 0)}
+            />
+            <StatCard
+                label="Ticket Médio"
+                value={formatCurrency(Number(data.average_ticket ?? 0))}
+            />
+            <StatCard
+                label="Receita Total"
+                value={formatCurrency(Number(data.total_revenue ?? 0))}
+            />
+            <StatCard
+                label="Taxa de Retenção"
+                value={`${retentionPct}%`}
+            />
         </div>
     );
 }
-
 
 function DemographicsSection({ data }: { data: any }) {
     const ageData = Object.entries(data.customers_by_age_group ?? {}).map(([key, val]) => ({
@@ -135,7 +51,7 @@ function DemographicsSection({ data }: { data: any }) {
     }));
 
     const genderData = Object.entries(data.customers_by_gender ?? {}).map(([key, val]) => ({
-        name: GENDER_LABELS[key] ?? key,
+        name: getGenderLabel(key),
         value: val as number,
     }));
 
@@ -143,7 +59,6 @@ function DemographicsSection({ data }: { data: any }) {
         <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">Demographics</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Faixa etária */}
                 <Card.Root>
                     <Card.Header>
                         <Card.Title>Clientes por Faixa Etária</Card.Title>
@@ -152,30 +67,18 @@ function DemographicsSection({ data }: { data: any }) {
                         {ageData.length === 0 ? (
                             <p className="text-sm text-zinc-400 text-center py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={ageData}
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={70}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        paddingAngle={2}
-                                    >
-                                        {ageData.map((_, i) => (
-                                            <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v: any) => v} />
-                                    <Legend iconType="circle" iconSize={10} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <PieChart
+                                data={ageData}
+                                dataKey="value"
+                                nameKey="name"
+                                colors={PALETTE}
+                                outerRadius={70}
+                                height={200}
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
 
-                {/* Gênero */}
                 <Card.Root>
                     <Card.Header>
                         <Card.Title>Distribuição por Gênero</Card.Title>
@@ -184,26 +87,15 @@ function DemographicsSection({ data }: { data: any }) {
                         {genderData.length === 0 ? (
                             <p className="text-sm text-zinc-400 text-center py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={genderData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={45}
-                                        outerRadius={70}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        paddingAngle={3}
-                                    >
-                                        {genderData.map((_, i) => (
-                                            <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v: any) => v} />
-                                    <Legend iconType="circle" iconSize={10} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <PieChart
+                                data={genderData}
+                                dataKey="value"
+                                nameKey="name"
+                                colors={PALETTE}
+                                innerRadius={45}
+                                outerRadius={70}
+                                height={200}
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
@@ -212,21 +104,19 @@ function DemographicsSection({ data }: { data: any }) {
     );
 }
 
-
 function PreferencesSection({ data }: { data: any }) {
     const channelData = (data.acquisition_channels ?? []).map((c: any) => ({
-        name: CHANNEL_LABELS[c.channel] ?? c.channel,
+        name: getReferralSourceLabel(c.channel),
         clientes: c.customer_count,
-        pct: c.percentage?.toFixed(1),
     }));
 
     const styleData = (data.popular_styles ?? []).map((s: any) => ({
-        name: STYLE_LABELS[s.style] ?? s.style,
+        name: getStyleLabel(s.style),
         cortes: s.count,
     }));
 
     const freqData = Object.entries(data.preferred_frequency ?? {}).map(([key, val]) => ({
-        name: FREQUENCY_LABELS[key] ?? key,
+        name: getFrequencyLabel(key),
         clientes: val as number,
     }));
 
@@ -234,7 +124,6 @@ function PreferencesSection({ data }: { data: any }) {
         <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">Preferências & Comportamento</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Canais */}
                 <Card.Root>
                     <Card.Header>
                         <Card.Title>Canais de Aquisição</Card.Title>
@@ -243,20 +132,19 @@ function PreferencesSection({ data }: { data: any }) {
                         {channelData.length === 0 ? (
                             <p className="text-sm text-zinc-400 text-center py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={200}>
-                                <BarChart data={channelData} layout="vertical" margin={{ left: 16, right: 16 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e4e4e7" />
-                                    <XAxis type="number" tick={{ fontSize: 11 }} />
-                                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
-                                    <Tooltip />
-                                    <Bar dataKey="clientes" name="Clientes" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <BarChart
+                                data={channelData}
+                                dataKey="clientes"
+                                xAxisKey="name"
+                                name="Clientes"
+                                color="#f59e0b"
+                                height={200}
+                                layout="vertical"
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
 
-                {/* Estilos */}
                 <Card.Root>
                     <Card.Header>
                         <Card.Title>Estilos Mais Pedidos</Card.Title>
@@ -265,46 +153,33 @@ function PreferencesSection({ data }: { data: any }) {
                         {styleData.length === 0 ? (
                             <p className="text-sm text-zinc-400 text-center py-8">Sem dados</p>
                         ) : (
-                            <ResponsiveContainer width="100%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={styleData}
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={70}
-                                        dataKey="cortes"
-                                        nameKey="name"
-                                        paddingAngle={2}
-                                    >
-                                        {styleData.map((_: any, i: number) => (
-                                            <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v: any) => v} />
-                                    <Legend iconType="circle" iconSize={10} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <PieChart
+                                data={styleData}
+                                dataKey="cortes"
+                                nameKey="name"
+                                colors={PALETTE}
+                                outerRadius={70}
+                                height={200}
+                            />
                         )}
                     </Card.Body>
                 </Card.Root>
             </div>
 
-            {/* Frequência */}
             {freqData.length > 0 && (
                 <Card.Root className="mt-6">
                     <Card.Header>
                         <Card.Title>Frequência de Visita Preferida</Card.Title>
                     </Card.Header>
                     <Card.Body>
-                        <ResponsiveContainer width="100%" height={180}>
-                            <BarChart data={freqData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 11 }} />
-                                <Tooltip />
-                                <Bar dataKey="clientes" name="Clientes" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <BarChart
+                            data={freqData}
+                            dataKey="clientes"
+                            xAxisKey="name"
+                            name="Clientes"
+                            color="#6366f1"
+                            height={180}
+                        />
                     </Card.Body>
                 </Card.Root>
             )}
@@ -321,16 +196,14 @@ function FinancialSection({ data }: { data: any }) {
     }));
 
     const channelRevenue = (data.channel_vs_revenue ?? []).map((c: any) => ({
-        name: CHANNEL_LABELS[c.channel] ?? c.channel,
+        name: getReferralSourceLabel(c.channel),
         ticket: Number(c.average_ticket),
-        clientes: c.customer_count,
     }));
 
     return (
         <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">Financial Insights</h2>
             <div className="space-y-6">
-                {/* Top Clientes */}
                 {topCustomers.length > 0 && (
                     <Card.Root>
                         <Card.Header>
@@ -361,27 +234,26 @@ function FinancialSection({ data }: { data: any }) {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Ticket médio por faixa etária */}
                     {avgByAge.length > 0 && (
                         <Card.Root>
                             <Card.Header>
                                 <Card.Title>Ticket Médio por Faixa Etária</Card.Title>
                             </Card.Header>
                             <Card.Body>
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <BarChart data={avgByAge} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                                        <YAxis tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} width={64} />
-                                        <Tooltip content={<CurrencyTooltip />} />
-                                        <Bar dataKey="ticket" name="Ticket médio" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                <BarChart
+                                    data={avgByAge}
+                                    dataKey="ticket"
+                                    xAxisKey="name"
+                                    name="Ticket médio"
+                                    color="#22c55e"
+                                    height={200}
+                                    formatYAxis={formatCurrencyShort}
+                                    formatTooltip={formatCurrency}
+                                />
                             </Card.Body>
                         </Card.Root>
                     )}
 
-                    {/* Canal vs Ticket Médio */}
                     {channelRevenue.length > 0 && (
                         <Card.Root>
                             <Card.Header>
@@ -389,15 +261,16 @@ function FinancialSection({ data }: { data: any }) {
                                 <Card.Description>Qual canal traz clientes com maior valor</Card.Description>
                             </Card.Header>
                             <Card.Body>
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <BarChart data={channelRevenue} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                                        <YAxis tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} width={64} />
-                                        <Tooltip content={<CurrencyTooltip />} />
-                                        <Bar dataKey="ticket" name="Ticket médio" fill="#ec4899" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                <BarChart
+                                    data={channelRevenue}
+                                    dataKey="ticket"
+                                    xAxisKey="name"
+                                    name="Ticket médio"
+                                    color="#ec4899"
+                                    height={200}
+                                    formatYAxis={formatCurrencyShort}
+                                    formatTooltip={formatCurrency}
+                                />
                             </Card.Body>
                         </Card.Root>
                     )}
@@ -410,15 +283,15 @@ function FinancialSection({ data }: { data: any }) {
 function AnalyticsSkeleton() {
     return (
         <div className="space-y-6">
-            <div className="h-9 w-48 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+            <Skeleton width="12rem" height="2.25rem" />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-20 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                    <Skeleton key={i} height="5rem" className="rounded-xl" />
                 ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                    <Skeleton key={i} height="16rem" className="rounded-xl" />
                 ))}
             </div>
         </div>
