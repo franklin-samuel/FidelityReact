@@ -28,6 +28,47 @@ function SelectField({ className = '', children, ...props }: SelectFieldProps) {
     );
 }
 
+// Componente de seção colapsável
+interface CollapsibleSectionProps {
+    title: string;
+    subtitle?: string;
+    isOpen: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+}
+
+function CollapsibleSection({ title, subtitle, isOpen, onToggle, children }: CollapsibleSectionProps) {
+    return (
+        <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+            <button
+                type="button"
+                onClick={onToggle}
+                className="w-full px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+                <div className="text-left">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+                    {subtitle && (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{subtitle}</p>
+                    )}
+                </div>
+                <svg
+                    className={`w-5 h-5 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            {isOpen && (
+                <div className="p-4 bg-white dark:bg-zinc-900 animate-fade-in">
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+}
+
 const EMPTY = '';
 
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
@@ -69,7 +110,6 @@ const STYLE_OPTIONS: { value: PreferredStyle; label: string }[] = [
     { value: 'NOT_INFORMED', label: 'Não informado' },
 ];
 
-
 interface CustomerForm {
     name: string;
     email: string;
@@ -98,12 +138,13 @@ const emptyForm: CustomerForm = {
     occupation: '',
 };
 
-
 export default function ClientsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [form, setForm] = useState<CustomerForm>(emptyForm);
+    const [showProfileFields, setShowProfileFields] = useState(false);
+    const [showPreferencesFields, setShowPreferencesFields] = useState(false);
 
     const { data: allCustomers, isLoading: customersLoading } = useCustomers();
     const { data: searchResults, isLoading: searchLoading } = useSearchCustomers(searchTerm);
@@ -149,6 +190,8 @@ export default function ClientsPage() {
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setForm(emptyForm);
+                setShowProfileFields(false);
+                setShowPreferencesFields(false);
             },
         });
     };
@@ -157,6 +200,8 @@ export default function ClientsPage() {
         if (!creating) {
             setIsCreateModalOpen(false);
             setForm(emptyForm);
+            setShowProfileFields(false);
+            setShowPreferencesFields(false);
         }
     };
 
@@ -306,178 +351,186 @@ export default function ClientsPage() {
                         )}
                     </div>
 
-                    {/* ─── Modal: Criar Cliente ─── */}
                     <Modal.Root open={isCreateModalOpen} onClose={closeModal}>
-                        <Modal.Content className="slide-in-down max-w-lg">
+                        <Modal.Content className="slide-in-down max-w-2xl max-h-[90vh] overflow-y-auto">
                             <Modal.Header onClose={closeModal}>Novo Cliente</Modal.Header>
                             <form onSubmit={handleCreate}>
                                 <Modal.Body>
-                                    <div className="space-y-5">
+                                    <div className="space-y-4">
 
-                                        {/* ── Seção: Dados básicos ── */}
-                                        <div>
-                                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-                                                Dados básicos
-                                            </p>
-                                            <div className="space-y-3">
+                                        {/* ── Campos obrigatórios sempre visíveis ── */}
+                                        <div className="space-y-3">
+                                            <Input.Root>
+                                                <Input.Label htmlFor="name" required>Nome completo</Input.Label>
+                                                <Input.Field
+                                                    id="name"
+                                                    placeholder="Nome completo do cliente"
+                                                    value={form.name}
+                                                    onChange={set('name')}
+                                                    required
+                                                    disabled={creating}
+                                                    autoFocus
+                                                />
+                                            </Input.Root>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <Input.Root>
-                                                    <Input.Label htmlFor="name" required>Nome</Input.Label>
+                                                    <Input.Label htmlFor="email" required>Email</Input.Label>
                                                     <Input.Field
-                                                        id="name"
-                                                        placeholder="Nome completo"
-                                                        value={form.name}
-                                                        onChange={set('name')}
+                                                        id="email"
+                                                        type="email"
+                                                        placeholder="email@exemplo.com"
+                                                        value={form.email}
+                                                        onChange={set('email')}
                                                         required
                                                         disabled={creating}
-                                                        autoFocus
                                                     />
                                                 </Input.Root>
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <Input.Root>
+                                                    <Input.Label htmlFor="phone" required>Telefone</Input.Label>
+                                                    <Input.Field
+                                                        id="phone"
+                                                        type="tel"
+                                                        placeholder="(00) 00000-0000"
+                                                        value={form.phone_number}
+                                                        onChange={set('phone_number')}
+                                                        required
+                                                        disabled={creating}
+                                                    />
+                                                </Input.Root>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Seção: Perfil (Colapsável) ── */}
+                                        <CollapsibleSection
+                                            title="Informações de Perfil"
+                                            subtitle="Dados demográficos e redes sociais (opcional)"
+                                            isOpen={showProfileFields}
+                                            onToggle={() => setShowProfileFields(!showProfileFields)}
+                                        >
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <Input.Root>
-                                                        <Input.Label htmlFor="email" required>Email</Input.Label>
+                                                        <Input.Label htmlFor="dob">Data de nascimento</Input.Label>
                                                         <Input.Field
-                                                            id="email"
-                                                            type="email"
-                                                            placeholder="email@exemplo.com"
-                                                            value={form.email}
-                                                            onChange={set('email')}
-                                                            required
+                                                            id="dob"
+                                                            type="date"
+                                                            value={form.date_of_birth}
+                                                            onChange={set('date_of_birth')}
                                                             disabled={creating}
                                                         />
                                                     </Input.Root>
                                                     <Input.Root>
-                                                        <Input.Label htmlFor="phone" required>Telefone</Input.Label>
+                                                        <Input.Label htmlFor="gender">Gênero</Input.Label>
+                                                        <SelectField
+                                                            id="gender"
+                                                            value={form.gender}
+                                                            onChange={set('gender')}
+                                                            disabled={creating}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {GENDER_OPTIONS.map((o) => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </SelectField>
+                                                    </Input.Root>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="occupation">Profissão</Input.Label>
                                                         <Input.Field
-                                                            id="phone"
-                                                            type="tel"
-                                                            placeholder="(00) 00000-0000"
-                                                            value={form.phone_number}
-                                                            onChange={set('phone_number')}
-                                                            required
+                                                            id="occupation"
+                                                            placeholder="Ex: Advogado"
+                                                            value={form.occupation}
+                                                            onChange={set('occupation')}
+                                                            disabled={creating}
+                                                        />
+                                                    </Input.Root>
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="instagram">Instagram</Input.Label>
+                                                        <Input.Field
+                                                            id="instagram"
+                                                            placeholder="@usuario"
+                                                            value={form.instagram_username}
+                                                            onChange={set('instagram_username')}
                                                             disabled={creating}
                                                         />
                                                     </Input.Root>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </CollapsibleSection>
 
-                                        {/* ── Seção: Perfil ── */}
-                                        <div>
-                                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-                                                Perfil
-                                            </p>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="dob">Data de nascimento</Input.Label>
-                                                    <Input.Field
-                                                        id="dob"
-                                                        type="date"
-                                                        value={form.date_of_birth}
-                                                        onChange={set('date_of_birth')}
-                                                        disabled={creating}
-                                                    />
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="gender">Gênero</Input.Label>
-                                                    <SelectField
-                                                        id="gender"
-                                                        value={form.gender}
-                                                        onChange={set('gender')}
-                                                        disabled={creating}
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {GENDER_OPTIONS.map((o) => (
-                                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                                        ))}
-                                                    </SelectField>
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="occupation">Profissão</Input.Label>
-                                                    <Input.Field
-                                                        id="occupation"
-                                                        placeholder="Ex: Advogado"
-                                                        value={form.occupation}
-                                                        onChange={set('occupation')}
-                                                        disabled={creating}
-                                                    />
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="instagram">Instagram</Input.Label>
-                                                    <Input.Field
-                                                        id="instagram"
-                                                        placeholder="@usuario"
-                                                        value={form.instagram_username}
-                                                        onChange={set('instagram_username')}
-                                                        disabled={creating}
-                                                    />
-                                                </Input.Root>
+                                        {/* ── Seção: Preferências (Colapsável) ── */}
+                                        <CollapsibleSection
+                                            title="Preferências de Atendimento"
+                                            subtitle="Ajuda a personalizar o serviço (opcional)"
+                                            isOpen={showPreferencesFields}
+                                            onToggle={() => setShowPreferencesFields(!showPreferencesFields)}
+                                        >
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="referral">Como nos conheceu?</Input.Label>
+                                                        <SelectField
+                                                            id="referral"
+                                                            value={form.referral_source}
+                                                            onChange={set('referral_source')}
+                                                            disabled={creating}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {REFERRAL_OPTIONS.map((o) => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </SelectField>
+                                                    </Input.Root>
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="frequency">Frequência</Input.Label>
+                                                        <SelectField
+                                                            id="frequency"
+                                                            value={form.preferred_frequency}
+                                                            onChange={set('preferred_frequency')}
+                                                            disabled={creating}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {FREQUENCY_OPTIONS.map((o) => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </SelectField>
+                                                    </Input.Root>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="style">Estilo preferido</Input.Label>
+                                                        <SelectField
+                                                            id="style"
+                                                            value={form.preferred_style}
+                                                            onChange={set('preferred_style')}
+                                                            disabled={creating}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            {STYLE_OPTIONS.map((o) => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </SelectField>
+                                                    </Input.Root>
+                                                    <Input.Root>
+                                                        <Input.Label htmlFor="barber">Barbeiro preferido</Input.Label>
+                                                        <SelectField
+                                                            id="barber"
+                                                            value={form.preferred_barber_id}
+                                                            onChange={set('preferred_barber_id')}
+                                                            disabled={creating}
+                                                        >
+                                                            <option value="">Sem preferência</option>
+                                                            {(barbers ?? []).map((b) => (
+                                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                                            ))}
+                                                        </SelectField>
+                                                    </Input.Root>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </CollapsibleSection>
 
-                                        {/* ── Seção: Preferências ── */}
-                                        <div>
-                                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-                                                Preferências
-                                            </p>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="referral">Como nos conheceu?</Input.Label>
-                                                    <SelectField
-                                                        id="referral"
-                                                        value={form.referral_source}
-                                                        onChange={set('referral_source')}
-                                                        disabled={creating}
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {REFERRAL_OPTIONS.map((o) => (
-                                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                                        ))}
-                                                    </SelectField>
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="frequency">Frequência</Input.Label>
-                                                    <SelectField
-                                                        id="frequency"
-                                                        value={form.preferred_frequency}
-                                                        onChange={set('preferred_frequency')}
-                                                        disabled={creating}
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {FREQUENCY_OPTIONS.map((o) => (
-                                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                                        ))}
-                                                    </SelectField>
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="style">Estilo preferido</Input.Label>
-                                                    <SelectField
-                                                        id="style"
-                                                        value={form.preferred_style}
-                                                        onChange={set('preferred_style')}
-                                                        disabled={creating}
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {STYLE_OPTIONS.map((o) => (
-                                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                                        ))}
-                                                    </SelectField>
-                                                </Input.Root>
-                                                <Input.Root>
-                                                    <Input.Label htmlFor="barber">Barbeiro preferido</Input.Label>
-                                                    <SelectField
-                                                        id="barber"
-                                                        value={form.preferred_barber_id}
-                                                        onChange={set('preferred_barber_id')}
-                                                        disabled={creating}
-                                                    >
-                                                        <option value="">Sem preferência</option>
-                                                        {(barbers ?? []).map((b) => (
-                                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                                        ))}
-                                                    </SelectField>
-                                                </Input.Root>
-                                            </div>
-                                        </div>
                                     </div>
                                 </Modal.Body>
 
@@ -491,7 +544,7 @@ export default function ClientsPage() {
                                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
                                                 Salvando...
                                             </>
-                                        ) : 'Salvar'}
+                                        ) : 'Salvar Cliente'}
                                     </Button.Root>
                                 </Modal.Footer>
                             </form>

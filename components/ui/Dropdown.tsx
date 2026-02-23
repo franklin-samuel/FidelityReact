@@ -26,6 +26,20 @@ const DropdownRoot: React.FC<DropdownRootProps> = ({ children }) => {
         };
     }, [isOpen]);
 
+    useEffect(() => {
+        if (dropdownRef.current) {
+            const cardParent = dropdownRef.current.closest('[class*="bg-white"], [class*="rounded-xl"]');
+            if (cardParent && cardParent instanceof HTMLElement) {
+                if (isOpen) {
+                    cardParent.style.position = 'relative';
+                    cardParent.style.zIndex = '50';
+                } else {
+                    cardParent.style.zIndex = '';
+                }
+            }
+        }
+    }, [isOpen]);
+
     return (
         <div ref={dropdownRef} className="relative inline-block">
             {React.Children.map(children, (child) => {
@@ -51,7 +65,7 @@ const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, isOpen, set
     return (
         <button
             onClick={() => setIsOpen?.(!isOpen)}
-            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors relative z-10"
             aria-label="Abrir menu"
         >
             {children}
@@ -76,7 +90,7 @@ const DropdownContent: React.FC<DropdownContentProps> = ({
 
     return (
         <div
-            className={`absolute ${alignmentClass} top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in`}
+            className={`absolute ${alignmentClass} top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden z-[9999] animate-fade-in`}
         >
             {children}
         </div>
