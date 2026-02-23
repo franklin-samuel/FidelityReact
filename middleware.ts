@@ -14,6 +14,7 @@ const adminOnlyRoutes = [
     '/barbers',
     '/catalog',
     '/settings',
+    '/analytics',
 ];
 
 const REDIRECT_WHEN_NOT_AUTHENTICATED = "/login";
