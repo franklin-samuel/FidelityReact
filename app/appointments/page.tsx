@@ -65,7 +65,7 @@ function BarberAppointmentRow({ appointment }: { appointment: Appointment }) {
 
                 {/* Campos financeiros */}
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                    <FieldItem label="Preço" value={formatCurrency(appointment.price)} />
+                    <FieldItem label="Preço" value={formatCurrency(appointment.total_amount)} />
                     <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
                     <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
                     <FieldItem
@@ -139,7 +139,7 @@ function AdminAppointmentRow({ appointment }: { appointment: Appointment }) {
 
                 {/* Campos financeiros */}
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                    <FieldItem label="Preço" value={formatCurrency(appointment.price)} />
+                    <FieldItem label="Preço" value={formatCurrency(appointment.total_amount)} />
                     <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
                     <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
                     <FieldItem
