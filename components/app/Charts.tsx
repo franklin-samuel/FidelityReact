@@ -144,11 +144,11 @@ export function BarChart({
                     dataKey={dataKey}
                     name={name}
                     radius={isVertical ? [0, 4, 4, 0] : [6, 6, 0, 0]}
+                    fill={typeof color === 'string' ? color : undefined}
                 >
                     {Array.isArray(color) && data.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={color[index % color.length]} />
                     ))}
-                    {!Array.isArray(color) && <Cell fill={color} />}
                 </Bar>
             </RechartsBarChart>
         </ResponsiveContainer>
