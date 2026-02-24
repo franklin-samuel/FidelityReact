@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "NaGaragem - Sistema de Fidelidade",
-    description: "Sistema de fidelidade para barbearias",
+    title: "NaGaragem - Sistema de Gestão",
+    description: "Gestão de Processo e Finanças",
 };
 
 export default function RootLayout({

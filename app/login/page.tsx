@@ -41,7 +41,7 @@ export default function LoginPage() {
                     <h1 className="text-5xl font-bold text-zinc-900 dark:text-zinc-50 transition-colors">
                         Na<span className="text-amber-500">Garagem</span>
                     </h1>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-lg mt-2 transition-colors">Sistema de Fidelidade</p>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-lg mt-2 transition-colors">Sistema de Gestão</p>
                 </div>
 
                 {/* Card */}
@@ -153,7 +153,7 @@ export default function LoginPage() {
                 {/* Version Info */}
                 <div className="text-center mt-6">
                     <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                        NaGaragem v1.0 • Sistema de Fidelidade
+                        NaGaragem v2.0 • Sistema de Gestão
                     </p>
                 </div>
             </div>

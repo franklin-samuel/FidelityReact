@@ -20,25 +20,34 @@ const adminOnlyRoutes = [
 const REDIRECT_WHEN_NOT_AUTHENTICATED = "/login";
 const REDIRECT_WHEN_NOT_AUTHORIZED = "/";
 
+function isTokenExpired(token: string): boolean {
+    try {
+        const decoded = jwtDecode<JwtPayload>(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        return decoded.exp < currentTime;
+    } catch {
+        return true;
+    }
+}
+
 export default function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname;
-
     const isPublicRoute = publicRoutes.includes(path);
     const accessToken = request.cookies.get("access_token")?.value;
 
-    if (!accessToken && !isPublicRoute) {
+    if ((!accessToken || isTokenExpired(accessToken)) && !isPublicRoute) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = REDIRECT_WHEN_NOT_AUTHENTICATED;
         return NextResponse.redirect(redirectUrl);
     }
 
-    if (accessToken && isPublicRoute) {
+    if (accessToken && !isTokenExpired(accessToken) && isPublicRoute) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/";
         return NextResponse.redirect(redirectUrl);
     }
 
-    if (accessToken && !isPublicRoute) {
+    if (accessToken && !isTokenExpired(accessToken) && !isPublicRoute) {
         try {
             const decoded = jwtDecode<JwtPayload>(accessToken);
             const roles = decoded.role || [];
