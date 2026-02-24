@@ -75,7 +75,7 @@ export function Sidebar() {
             ),
         },
         {
-            name: 'Serviços e Produtos',
+            name: 'Catálogo',
             path: '/catalog',
             icon: (
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
