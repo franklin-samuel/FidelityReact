@@ -20,7 +20,7 @@ import {
 const PALETTE = ['#f59e0b', '#6366f1', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
 
 function OverviewCards({ data }: { data: any }) {
-    const retentionPct = ((data.retention_rate ?? 0) * 100).toFixed(1);
+    const retentionPct = ((data.retention_rate ?? 0)).toFixed(2);
 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
