@@ -162,7 +162,7 @@ function AdminDashboard({ metrics }: { metrics: AdminDashboardMetrics }) {
                                         <p className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm">
                                             {formatCurrency(Number(barber.total_revenue))}
                                         </p>
-                                        <p className="text-xs text-zinc-400">{barber.appointments_count} atendimentos</p>
+                                        <p className="text-xs text-zinc-400">{barber.appointments_count} vendas</p>
                                     </div>
                                 </div>
                             ))}
