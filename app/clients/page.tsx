@@ -185,7 +185,7 @@ export default function ClientsPage() {
                     <div className="space-y-6 animate-fade-in">
                         <Layout.Header
                             title="Clientes"
-                            description="Gerencie seus clientes e registre cortes"
+                            description="Cadastre e gerencie seus clientes"
                             actions={
                                 <Button.Root onClick={() => setIsCreateModalOpen(true)} className="transition-all hover:scale-105">
                                     <Button.Icon>

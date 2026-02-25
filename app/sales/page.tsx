@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +32,7 @@ const formatCurrency = (value: number) =>
 export default function SalesPage() {
     const [tab, setTab] = useState<TabType>('services');
     const [step, setStep] = useState<SaleStep>('select-item');
+    const [itemSearchTerm, setItemSearchTerm] = useState('');
 
     const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -50,6 +51,18 @@ export default function SalesPage() {
     const isService = tab === 'services';
     const selectedItem = isService ? selectedService : selectedProduct;
     const isRegistering = registeringService || registeringProduct;
+
+    const filteredItems = useMemo(() => {
+        const items = isService ? services : products;
+        if (!items) return [];
+
+        if (!itemSearchTerm.trim()) return items;
+
+        const term = itemSearchTerm.toLowerCase();
+        return items.filter(item =>
+            item.name.toLowerCase().includes(term)
+        );
+    }, [services, products, isService, itemSearchTerm]);
 
     const loyaltyCustomerId = selectedCustomer?.id ?? null;
     const loyaltyServiceId = isService && selectedService ? selectedService.id : null;
@@ -128,6 +141,7 @@ export default function SalesPage() {
         setSelectedProduct(null);
         setSelectedCustomer(null);
         setCustomerSearch('');
+        setItemSearchTerm('');
         setPaymentMethod('PIX');
         setTip('');
         setStep('select-item');
@@ -138,6 +152,7 @@ export default function SalesPage() {
         setSelectedService(null);
         setSelectedProduct(null);
         setSelectedCustomer(null);
+        setItemSearchTerm('');
         setStep('select-item');
     };
 
@@ -183,15 +198,51 @@ export default function SalesPage() {
                                     {tab === 'services' ? 'Selecione um serviço' : 'Selecione um produto'}
                                 </h2>
 
+                                {/* Campo de busca */}
+                                <Input.Root>
+                                    <Input.Container>
+                                        <Input.Icon>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </Input.Icon>
+                                        <Input.Field
+                                            placeholder={`Buscar ${tab === 'services' ? 'serviço' : 'produto'}...`}
+                                            value={itemSearchTerm}
+                                            onChange={(e) => setItemSearchTerm(e.target.value)}
+                                            className="pl-10 pr-10"
+                                        />
+                                        {itemSearchTerm && (
+                                            <button
+                                                onClick={() => setItemSearchTerm('')}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </Input.Container>
+                                </Input.Root>
+
                                 {(tab === 'services' ? loadingServices : loadingProducts) ? (
                                     <div className="space-y-3">
                                         {[1, 2, 3].map(i => (
                                             <div key={i} className="h-16 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
                                         ))}
                                     </div>
+                                ) : filteredItems.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <p className="text-sm text-zinc-400">
+                                            {itemSearchTerm
+                                                ? `Nenhum ${tab === 'services' ? 'serviço' : 'produto'} encontrado`
+                                                : `Nenhum ${tab === 'services' ? 'serviço' : 'produto'} cadastrado`
+                                            }
+                                        </p>
+                                    </div>
                                 ) : (
                                     <div className="space-y-2">
-                                        {(tab === 'services' ? services : products)?.map((item) => {
+                                        {filteredItems.map((item) => {
                                             const isSelected = isService
                                                 ? selectedService?.id === item.id
                                                 : selectedProduct?.id === item.id;
