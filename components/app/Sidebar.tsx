@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 export function Sidebar() {
     const router = useRouter();
     const pathname = usePathname();
-    const { logout, user } = useAuth();
+    const { logout, user, isLoading } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isAdmin = user?.role === 'ADMIN';
@@ -26,6 +26,10 @@ export function Sidebar() {
             document.body.style.overflow = 'unset';
         };
     }, [isMobileMenuOpen]);
+
+    if (isLoading) {
+        return <SidebarSkeleton />
+    }
 
     const adminNavItems = [
         {
@@ -251,6 +255,41 @@ export function Sidebar() {
                     </div>
                 </>
             )}
+        </>
+    );
+}
+
+function SidebarSkeleton() {
+    return (
+        <>
+            {/* Desktop */}
+            <aside className="hidden lg:flex w-64 h-screen bg-zinc-900 dark:bg-black flex-col fixed left-0 top-0 z-40">
+                <div className="p-6 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-zinc-800 rounded-xl animate-pulse" />
+                    <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse" />
+                </div>
+
+                <nav className="flex-1 px-4 space-y-1">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                        <div key={i} className="h-12 bg-zinc-800 rounded-lg animate-pulse mb-2" />
+                    ))}
+                </nav>
+
+                <div className="p-4 border-t border-zinc-800">
+                    <div className="h-12 bg-zinc-800 rounded-lg animate-pulse" />
+                </div>
+            </aside>
+
+            {/* Mobile Navbar */}
+            <nav className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-900 dark:bg-black border-b border-zinc-800">
+                <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-zinc-800 rounded-lg animate-pulse" />
+                        <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse" />
+                    </div>
+                    <div className="w-10 h-10 bg-zinc-800 rounded animate-pulse" />
+                </div>
+            </nav>
         </>
     );
 }
