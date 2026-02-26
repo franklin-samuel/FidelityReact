@@ -28,6 +28,7 @@ export const useCreateCustomer = () => {
         mutationFn: (data: CreateCustomerRequest) => customerService.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [CUSTOMER_QUERY_KEY] });
+            queryClient.invalidateQueries({ queryKey: ['analytics'] });
         },
     });
 };

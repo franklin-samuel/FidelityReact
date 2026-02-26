@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/app/StatCard';
+import { ComparisonCard } from '@/components/app/ComparisionCard';
 import { BarChart, PieChart } from '@/components/app/Charts';
 import { useAnalyticsData } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/Loading';
@@ -19,26 +20,51 @@ import {
 
 const PALETTE = ['#f59e0b', '#6366f1', '#22c55e', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
 
+const WEEKDAY_LABELS: Record<string, string> = {
+    'SUNDAY': 'Domingo',
+    'MONDAY': 'Segunda',
+    'TUESDAY': 'Terça',
+    'WEDNESDAY': 'Quarta',
+    'THURSDAY': 'Quinta',
+    'FRIDAY': 'Sexta',
+    'SATURDAY': 'Sábado',
+};
+
 function OverviewCards({ data }: { data: any }) {
     const retentionPct = ((data.retention_rate ?? 0)).toFixed(2);
 
+    const newCustomersGrowthPct = data.new_customers_count_previous_period > 0
+        ? ((data.new_customers_growth_absolute / data.new_customers_count_previous_period) * 100)
+        : 0;
+
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-                label="Total de Clientes"
-                value={String(data.total_customers ?? 0)}
+            <ComparisonCard
+                label="Clientes Novos"
+                currentValue={String(data.new_customers_count ?? 0)}
+                growthAbsolute={data.new_customers_growth_absolute ?? 0}
+                growthPercentage={newCustomersGrowthPct}
+                tooltip="Compara novos clientes cadastrados no mês atual (até hoje) vs mesmo período do mês anterior"
             />
-            <StatCard
+
+            <ComparisonCard
                 label="Ticket Médio"
-                value={formatCurrency(Number(data.average_ticket ?? 0))}
+                currentValue={formatCurrency(Number(data.average_ticket_current ?? 0))}
+                growthAbsolute={data.average_ticket_growth_absolute ?? 0}
+                growthPercentage={data.average_ticket_growth_percentage ?? 0}
+                formatValue={formatCurrency}
+                tooltip="Compara o ticket médio do mês atual (até hoje) vs mesmo período do mês anterior"
             />
+
             <StatCard
                 label="Receita Total"
                 value={formatCurrency(Number(data.total_revenue ?? 0))}
             />
+
             <StatCard
                 label="Taxa de Retenção"
                 value={`${retentionPct}%`}
+                tooltip="Percentual de clientes do mês passado que retornaram este mês"
             />
         </div>
     );
@@ -100,6 +126,46 @@ function DemographicsSection({ data }: { data: any }) {
                     </Card.Body>
                 </Card.Root>
             </div>
+        </div>
+    );
+}
+
+function RevenueSection({ data }: { data: any }) {
+    const weekdayData = Object.entries(data.revenue_by_weekday ?? {})
+        .map(([key, val]) => ({
+            name: WEEKDAY_LABELS[key] || key,
+            faturamento: Number(val),
+        }))
+        .sort((a, b) => {
+            const order = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            return order.indexOf(a.name) - order.indexOf(b.name);
+        });
+
+    return (
+        <div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">Faturamento</h2>
+            <Card.Root>
+                <Card.Header>
+                    <Card.Title>Faturamento Médio por Dia da Semana</Card.Title>
+                    <Card.Description>Média baseada nas últimas 12 semanas</Card.Description>
+                </Card.Header>
+                <Card.Body>
+                    {weekdayData.length === 0 ? (
+                        <p className="text-sm text-zinc-400 text-center py-8">Sem dados</p>
+                    ) : (
+                        <BarChart
+                            data={weekdayData}
+                            dataKey="faturamento"
+                            xAxisKey="name"
+                            name="Faturamento"
+                            color="#f59e0b"
+                            height={240}
+                            formatYAxis={formatCurrencyShort}
+                            formatTooltip={formatCurrency}
+                        />
+                    )}
+                </Card.Body>
+            </Card.Root>
         </div>
     );
 }
@@ -318,6 +384,7 @@ export default function AnalyticsPage() {
                             </div>
 
                             <OverviewCards data={data} />
+                            <RevenueSection data={data} />
                             <DemographicsSection data={data} />
                             <PreferencesSection data={data} />
                             <FinancialSection data={data} />
