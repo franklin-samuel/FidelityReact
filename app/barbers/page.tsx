@@ -76,9 +76,6 @@ export default function BarbersPage() {
                         ) : !barbers || barbers.length === 0 ? (
                             <div className="text-center py-16">
                                 <p className="text-zinc-600 dark:text-zinc-400 mb-4">Nenhum barbeiro cadastrado</p>
-                                <Button.Root variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
-                                    Adicionar barbeiro
-                                </Button.Root>
                             </div>
                         ) : (
                             <div className="space-y-3">
