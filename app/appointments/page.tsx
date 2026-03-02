@@ -1,183 +1,311 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
+import { AppointmentRow } from '@/components/app/AppointmentRow';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { Input } from '@/components/ui/Input';
 import { useAppointments } from '@/hooks/useAppointment';
+import { useBarbers } from '@/hooks/useBarber';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import type { Appointment } from '@/types/appointment';
+import { useDebounce } from '@/hooks/useDebounce';
+import type { AppointmentFilters, AppointmentType, PaymentMethod } from '@/types/appointment';
 
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+const SIZE_OPTIONS = [10, 25, 50, 100];
 
-function FieldItem({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+const TYPE_OPTIONS: { value: AppointmentType | ''; label: string }[] = [
+    { value: '', label: 'Todos os tipos' },
+    { value: 'SERVICE', label: 'Serviços' },
+    { value: 'PRODUCT', label: 'Produtos' },
+];
+
+const PAYMENT_OPTIONS: { value: PaymentMethod | ''; label: string }[] = [
+    { value: '', label: 'Qualquer pagamento' },
+    { value: 'PIX', label: 'Pix' },
+    { value: 'MONEY', label: 'Dinheiro' },
+    { value: 'CREDIT', label: 'Crédito' },
+    { value: 'DEBIT', label: 'Débito' },
+];
+
+interface DraftFilters {
+    type: AppointmentType | '';
+    payment_method: PaymentMethod | '';
+    barber_id: string;
+    date_from: string;
+    date_to: string;
+}
+
+const EMPTY_DRAFT: DraftFilters = {
+    type: '',
+    payment_method: '',
+    barber_id: '',
+    date_from: '',
+    date_to: '',
+};
+
+function FiltersModal({
+                          open,
+                          onClose,
+                          initial,
+                          onApply,
+                          isAdmin,
+                          barbers,
+                      }: {
+    open: boolean;
+    onClose: () => void;
+    initial: DraftFilters;
+    onApply: (draft: DraftFilters) => void;
+    isAdmin: boolean;
+    barbers?: { id: string; name: string }[];
+}) {
+    const [draft, setDraft] = useState<DraftFilters>(initial);
+
+    useEffect(() => {
+        if (open) setDraft(initial);
+    }, [open]);
+
+    const set = (key: keyof DraftFilters) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setDraft((prev) => ({ ...prev, [key]: e.target.value }));
+
+    const handleClear = () => setDraft(EMPTY_DRAFT);
+
+    const handleApply = () => {
+        onApply(draft);
+        onClose();
+    };
+
+    const hasAny = Object.values(draft).some(Boolean);
+
     return (
-        <div className="text-center">
-            <p className="text-xs text-zinc-400">{label}</p>
-            <p className={`font-medium text-sm ${highlight ? 'text-green-600 dark:text-green-400 font-bold' : 'text-zinc-900 dark:text-zinc-50'}`}>
-                {value}
-            </p>
-        </div>
+        <Modal.Root open={open} onClose={onClose}>
+            <Modal.Content>
+                <Modal.Header onClose={onClose}>Filtros avançados</Modal.Header>
+
+                <Modal.Body>
+                    <div className="space-y-4">
+                        <Select.Root>
+                            <Select.Label htmlFor="f-type">Tipo</Select.Label>
+                            <Select.Field id="f-type" value={draft.type} onChange={set('type')}>
+                                {TYPE_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </Select.Field>
+                        </Select.Root>
+
+                        <Select.Root>
+                            <Select.Label htmlFor="f-payment">Forma de pagamento</Select.Label>
+                            <Select.Field id="f-payment" value={draft.payment_method} onChange={set('payment_method')}>
+                                {PAYMENT_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </Select.Field>
+                        </Select.Root>
+
+                        {isAdmin && (
+                            <Select.Root>
+                                <Select.Label htmlFor="f-barber">Barbeiro</Select.Label>
+                                <Select.Field id="f-barber" value={draft.barber_id} onChange={set('barber_id')}>
+                                    <option value="">Todos os barbeiros</option>
+                                    {(barbers ?? []).map((b) => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </Select.Field>
+                            </Select.Root>
+                        )}
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Período</label>
+                            <div className="flex items-center gap-3">
+                                <Input.Root className="flex-1">
+                                    <Input.Label htmlFor="f-from">De</Input.Label>
+                                    <Input.Field
+                                        id="f-from"
+                                        type="date"
+                                        value={draft.date_from}
+                                        onChange={set('date_from')}
+                                    />
+                                </Input.Root>
+                                <Input.Root className="flex-1">
+                                    <Input.Label htmlFor="f-to">Até</Input.Label>
+                                    <Input.Field
+                                        id="f-to"
+                                        type="date"
+                                        value={draft.date_to}
+                                        onChange={set('date_to')}
+                                    />
+                                </Input.Root>
+                            </div>
+                        </div>
+                    </div>
+                </Modal.Body>
+
+                <Modal.Footer>
+                    {hasAny && (
+                        <button
+                            onClick={handleClear}
+                            className="mr-auto text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
+                    <Button.Root variant="secondary" onClick={onClose}>Cancelar</Button.Root>
+                    <Button.Root onClick={handleApply}>Aplicar</Button.Root>
+                </Modal.Footer>
+            </Modal.Content>
+        </Modal.Root>
     );
 }
 
-function BarberAppointmentRow({ appointment }: { appointment: Appointment }) {
-    const isService = appointment.type === 'SERVICE';
-    const hasDiscount = appointment.loyalty_discount_applied;
-    const itemName = isService ? appointment.service_name : appointment.product_name;
+function Pagination({
+                        page, totalPages, totalElements, size, hasNext, hasPrevious, onPageChange, onSizeChange,
+                    }: {
+    page: number; totalPages: number; totalElements: number; size: number;
+    hasNext: boolean; hasPrevious: boolean;
+    onPageChange: (p: number) => void; onSizeChange: (s: number) => void;
+}) {
+    const from = totalElements === 0 ? 0 : (page - 1) * size + 1;
+    const to = Math.min(page * size, totalElements);
+
+    const getPages = (): (number | 'ellipsis')[] => {
+        if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        const pages: (number | 'ellipsis')[] = [1];
+        if (page > 3) pages.push('ellipsis');
+        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+        if (page < totalPages - 2) pages.push('ellipsis');
+        pages.push(totalPages);
+        return pages;
+    };
 
     return (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                {/* Item info */}
-                <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isService ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-blue-50 dark:bg-blue-950/30'
-                    }`}>
-                        {isService ? (
-                            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        )}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                                {itemName ?? (isService ? 'Serviço' : 'Produto')}
-                            </span>
-                            {hasDiscount && (
-                                <span className="text-xs bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium">
-                                    Fidelidade
-                                </span>
-                            )}
-                        </div>
-                        <p className="text-xs text-zinc-400">
-                            {format(new Date(appointment.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </p>
-                    </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+                <span>{totalElements === 0 ? '0 resultados' : `${from} – ${to} de ${totalElements}`}</span>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs">Por página:</span>
+                    <Select.Root>
+                        <Select.Field
+                            value={size}
+                            onChange={(e) => onSizeChange(Number(e.target.value))}
+                            className="py-1 px-2 text-xs w-20"
+                        >
+                            {SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+                        </Select.Field>
+                    </Select.Root>
                 </div>
+            </div>
 
-                {/* Campos financeiros */}
-                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                    <FieldItem label="Preço" value={formatCurrency(appointment.total_amount)} />
-                    <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
-                    <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
-                    <FieldItem
-                        label="Meu Ganho"
-                        value={formatCurrency(appointment.barber_total ?? 0)}
-                        highlight={true}
-                    />
-                </div>
+            <div className="flex items-center gap-1">
+                <button
+                    onClick={() => onPageChange(page - 1)} disabled={!hasPrevious}
+                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+
+                {getPages().map((p, i) =>
+                    p === 'ellipsis'
+                        ? <span key={`e-${i}`} className="px-2 text-zinc-400 text-sm">…</span>
+                        : <button
+                            key={p}
+                            onClick={() => onPageChange(p)}
+                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                                p === page ? 'bg-amber-500 text-white' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                            }`}
+                        >{p}</button>
+                )}
+
+                <button
+                    onClick={() => onPageChange(page + 1)} disabled={!hasNext}
+                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
         </div>
     );
 }
 
-function AdminAppointmentRow({ appointment }: { appointment: Appointment }) {
-    const isService = appointment.type === 'SERVICE';
-    const hasDiscount = appointment.loyalty_discount_applied;
-    const itemName = isService ? appointment.service_name : appointment.product_name;
-
-    return (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                {/* Item info */}
-                <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isService ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-blue-50 dark:bg-blue-950/30'
-                    }`}>
-                        {isService ? (
-                            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        )}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                                {itemName ?? (isService ? 'Serviço' : 'Produto')}
-                            </span>
-                            {hasDiscount && (
-                                <span className="text-xs bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium">
-                                    Fidelidade
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-xs text-zinc-400">
-                                {format(new Date(appointment.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                            </p>
-                            {appointment.barber_name && (
-                                <>
-                                    <span className="text-xs text-zinc-300 dark:text-zinc-600">•</span>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                                        {appointment.barber_name}
-                                    </p>
-                                </>
-                            )}
-                            {appointment.customer_name && (
-                                <>
-                                    <span className="text-xs text-zinc-300 dark:text-zinc-600">•</span>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        {appointment.customer_name}
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Campos financeiros */}
-                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                    <FieldItem label="Preço" value={formatCurrency(appointment.total_amount)} />
-                    <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
-                    <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
-                    <FieldItem
-                        label="Ganho Barbearia"
-                        value={formatCurrency(appointment.barbershop_revenue ?? 0)}
-                        highlight={true}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
+const DEFAULT_FILTERS: AppointmentFilters = {
+    page: 1, size: 10, search: '',
+    type: '', payment_method: '', barber_id: '', date_from: '', date_to: '',
+};
 
 export default function AppointmentsPage() {
-    const { data: appointments, isLoading } = useAppointments();
+    const [filters, setFilters] = useState<AppointmentFilters>(DEFAULT_FILTERS);
+    const [searchInput, setSearchInput] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const debouncedSearch = useDebounce(searchInput, 400);
+
     const { user } = useAuth();
     const isAdmin = user?.role === 'ADMIN';
+    const { data: barbers } = useBarbers();
+
+    useEffect(() => {
+        setFilters((prev) => ({ ...prev, search: debouncedSearch, page: 1 }));
+    }, [debouncedSearch]);
+
+    const { data: result, isLoading } = useAppointments(filters);
+
+    const handleApplyFilters = useCallback((draft: DraftFilters) => {
+        setFilters((prev) => ({ ...prev, ...draft, page: 1 }));
+    }, []);
+
+    const handlePageChange = useCallback((page: number) => setFilters((prev) => ({ ...prev, page })), []);
+    const handleSizeChange = useCallback((size: number) => setFilters((prev) => ({ ...prev, size, page: 1 })), []);
+
+    const handleClearAll = useCallback(() => {
+        setSearchInput('');
+        setFilters(DEFAULT_FILTERS);
+    }, []);
+
+    const appointments = result?.content ?? [];
+    const totalElements = result?.total_elements ?? 0;
+    const totalPages = result?.total_pages ?? 1;
+    const currentPage = result?.page ?? 1;
+    const currentSize = result?.size ?? 25;
+    const hasNext = result?.has_next ?? false;
+    const hasPrevious = result?.has_previous ?? false;
+
+    const activeAdvancedCount = [
+        filters.type, filters.payment_method, filters.barber_id,
+        filters.date_from || filters.date_to,
+    ].filter(Boolean).length;
+
+    const hasAnyFilter = !!searchInput || activeAdvancedCount > 0;
+
+    const currentDraft: DraftFilters = {
+        type: (filters.type ?? '') as AppointmentType | '',
+        payment_method: (filters.payment_method ?? '') as PaymentMethod | '',
+        barber_id: filters.barber_id ?? '',
+        date_from: filters.date_from ?? '',
+        date_to: filters.date_to ?? '',
+    };
 
     return (
         <Layout.Root>
             <Sidebar />
             <Layout.Main>
                 <Layout.Content>
-                    <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-5 animate-fade-in">
                         <Layout.Header
                             title={isAdmin ? 'Atendimentos' : 'Meus Atendimentos'}
-                            description={isAdmin
-                                ? 'Histórico completo de atendimentos'
-                                : 'Seu histórico de atendimentos'}
+                            description={isAdmin ? 'Histórico completo de atendimentos' : 'Seu histórico de atendimentos'}
                         />
-
+                        {/* Results */}
                         {isLoading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3, 4, 5].map(i => (
                                     <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
                                 ))}
                             </div>
-                        ) : !appointments || appointments.length === 0 ? (
+                        ) : appointments.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
                                     <svg className="w-10 h-10 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,27 +313,42 @@ export default function AppointmentsPage() {
                                     </svg>
                                 </div>
                                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
-                                    Nenhum atendimento registrado
+                                    Nenhum atendimento encontrado
                                 </h3>
                                 <p className="text-zinc-600 dark:text-zinc-400">
-                                    Os atendimentos registrados aparecerão aqui
+                                    {hasAnyFilter
+                                        ? 'Tente ajustar os filtros para ver mais resultados'
+                                        : 'Os atendimentos registrados aparecerão aqui'}
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {appointments.map((appointment, index) => (
-                                    <div
-                                        key={appointment.id}
-                                        className="animate-fade-in"
-                                        style={{ animationDelay: `${index * 30}ms` }}
-                                    >
-                                        {isAdmin
-                                            ? <AdminAppointmentRow appointment={appointment} />
-                                            : <BarberAppointmentRow appointment={appointment} />
-                                        }
-                                    </div>
-                                ))}
-                            </div>
+                            <>
+                                <div className="space-y-3">
+                                    {appointments.map((appointment, index) => (
+                                        <div
+                                            key={appointment.id}
+                                            className="animate-fade-in"
+                                            style={{ animationDelay: `${index * 30}ms` }}
+                                        >
+                                            <AppointmentRow
+                                                appointment={appointment}
+                                                variant={isAdmin ? 'admin' : 'barber'}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <Pagination
+                                    page={currentPage}
+                                    totalPages={totalPages}
+                                    totalElements={totalElements}
+                                    size={currentSize}
+                                    hasNext={hasNext}
+                                    hasPrevious={hasPrevious}
+                                    onPageChange={handlePageChange}
+                                    onSizeChange={handleSizeChange}
+                                />
+                            </>
                         )}
                     </div>
                 </Layout.Content>

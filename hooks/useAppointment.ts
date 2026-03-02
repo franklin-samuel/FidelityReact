@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentService } from '@/services/appointment.service';
 import type {
+    AppointmentFilters,
     RegisterServiceAppointmentRequest,
     RegisterProductAppointmentRequest,
     UpdateAppointmentRequest,
@@ -8,10 +9,10 @@ import type {
 
 export const APPOINTMENT_QUERY_KEY = 'appointments';
 
-export const useAppointments = () => {
+export const useAppointments = (filters: AppointmentFilters = {}) => {
     return useQuery({
-        queryKey: [APPOINTMENT_QUERY_KEY],
-        queryFn: () => appointmentService.list(),
+        queryKey: [APPOINTMENT_QUERY_KEY, filters],
+        queryFn: () => appointmentService.list(filters),
     });
 };
 

@@ -25,6 +25,29 @@ export interface Appointment {
     created_at: string;
 }
 
+export interface PaginatedAppointments {
+    content: Appointment[];
+    page: number;
+    size: number;
+    total_elements: number;
+    total_pages: number;
+    sort: string;
+    direction: string;
+    has_next: boolean;
+    has_previous: boolean;
+}
+
+export interface AppointmentFilters {
+    page?: number;
+    size?: number;
+    search?: string;
+    type?: AppointmentType | '';
+    payment_method?: PaymentMethod | '';
+    barber_id?: string;
+    date_from?: string;
+    date_to?: string;
+}
+
 export interface RegisterServiceAppointmentRequest {
     payment_method: PaymentMethod;
     customer_id?: string;
