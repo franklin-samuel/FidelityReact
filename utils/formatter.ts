@@ -47,7 +47,7 @@ export const getStyleLabel = (style: string): string => {
         MEDIUM_FADE: 'Medium Fade',
         HIGH_FADE: 'High Fade',
         TAPER_FADE: 'Taper Fade',
-        BALD: 'Careca / Navalhado',
+        BALD: 'Careca',
         SOCIAL: 'Social',
         CLASSIC: 'Clássico',
         OTHERS: 'Outros',
