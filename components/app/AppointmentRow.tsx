@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatter';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { Appointment } from '@/types/appointment';
 
 interface FieldItemProps {
@@ -24,15 +25,20 @@ function FieldItem({ label, value, highlight }: FieldItemProps) {
 interface AppointmentRowProps {
     appointment: Appointment;
     variant: 'barber' | 'admin';
+    onDelete?: (appointment: Appointment) => void;
+    index?: number;
 }
 
-export function AppointmentRow({ appointment, variant }: AppointmentRowProps) {
+export function AppointmentRow({ appointment, variant, onDelete, index = 0 }: AppointmentRowProps) {
     const isService = appointment.type === 'SERVICE';
     const hasDiscount = appointment.loyalty_discount_applied;
     const itemName = isService ? appointment.service_name : appointment.product_name;
 
     return (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <div
+            className="animate-fade-in bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 relative"
+            style={{ animationDelay: `${index * 30}ms` }}
+        >
             <div className="flex items-center justify-between flex-wrap gap-3">
                 {/* Item info */}
                 <div className="flex items-center gap-3 min-w-0">
@@ -84,7 +90,6 @@ export function AppointmentRow({ appointment, variant }: AppointmentRowProps) {
                     </div>
                 </div>
 
-                {/* Financial fields */}
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                     <FieldItem label="Preço" value={formatCurrency(appointment.price)} />
                     <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
@@ -94,6 +99,24 @@ export function AppointmentRow({ appointment, variant }: AppointmentRowProps) {
                         value={formatCurrency(variant === 'admin' ? (appointment.barbershop_revenue ?? 0) : (appointment.barber_total ?? 0))}
                         highlight={true}
                     />
+
+                    {onDelete && (
+                        <Dropdown.Root>
+                            <Dropdown.Trigger>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                            </Dropdown.Trigger>
+                            <Dropdown.Content>
+                                <Dropdown.Item variant="danger" onClick={() => onDelete(appointment)}>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Deletar
+                                </Dropdown.Item>
+                            </Dropdown.Content>
+                        </Dropdown.Root>
+                    )}
                 </div>
             </div>
         </div>

@@ -8,11 +8,12 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
-import { useAppointments } from '@/hooks/useAppointment';
+import { useAppointments, useDeleteAppointment } from '@/hooks/useAppointment';
 import { useBarbers } from '@/hooks/useBarber';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppointmentFilters, AppointmentType, PaymentMethod } from '@/types/appointment';
+import type { Appointment } from '@/types/appointment';
 
 const SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -159,6 +160,59 @@ function FiltersModal({
     );
 }
 
+function DeleteConfirmationModal({
+                                     open,
+                                     onClose,
+                                     onConfirm,
+                                     appointment,
+                                     isDeleting,
+                                 }: {
+    open: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    appointment: Appointment | null;
+    isDeleting: boolean;
+}) {
+    if (!appointment) return null;
+
+    const isService = appointment.type === 'SERVICE';
+    const itemName = isService ? appointment.service_name : appointment.product_name;
+
+    return (
+        <Modal.Root open={open} onClose={onClose}>
+            <Modal.Content>
+                <Modal.Header onClose={onClose}>Confirmar exclusão</Modal.Header>
+                <Modal.Body>
+                    <div className="space-y-3">
+                        <p className="text-zinc-600 dark:text-zinc-400">
+                            Tem certeza que deseja excluir este atendimento?
+                        </p>
+                        <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                                {itemName ?? (isService ? 'Serviço' : 'Produto')}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                                {appointment.customer_name && `Cliente: ${appointment.customer_name}`}
+                            </p>
+                        </div>
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                            Esta ação não pode ser desfeita.
+                        </p>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button.Root variant="secondary" onClick={onClose} disabled={isDeleting}>
+                        Cancelar
+                    </Button.Root>
+                    <Button.Root variant="danger" onClick={onConfirm} disabled={isDeleting}>
+                        {isDeleting ? 'Excluindo...' : 'Excluir'}
+                    </Button.Root>
+                </Modal.Footer>
+            </Modal.Content>
+        </Modal.Root>
+    );
+}
+
 function Pagination({
                         page, totalPages, totalElements, size, hasNext, hasPrevious, onPageChange, onSizeChange,
                     }: {
@@ -241,11 +295,15 @@ export default function AppointmentsPage() {
     const [filters, setFilters] = useState<AppointmentFilters>(DEFAULT_FILTERS);
     const [searchInput, setSearchInput] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
     const debouncedSearch = useDebounce(searchInput, 400);
 
     const { user } = useAuth();
     const isAdmin = user?.role === 'ADMIN';
     const { data: barbers } = useBarbers();
+
+    const deleteAppointment = useDeleteAppointment();
 
     useEffect(() => {
         setFilters((prev) => ({ ...prev, search: debouncedSearch, page: 1 }));
@@ -264,6 +322,23 @@ export default function AppointmentsPage() {
         setSearchInput('');
         setFilters(DEFAULT_FILTERS);
     }, []);
+
+    const handleDeleteClick = useCallback((appointment: Appointment) => {
+        setAppointmentToDelete(appointment);
+        setDeleteModalOpen(true);
+    }, []);
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (!appointmentToDelete) return;
+
+        try {
+            await deleteAppointment.mutateAsync(appointmentToDelete.id);
+            setDeleteModalOpen(false);
+            setAppointmentToDelete(null);
+        } catch (error) {
+            console.error('Delete error:', error);
+        }
+    }, [appointmentToDelete, deleteAppointment]);
 
     const appointments = result?.content ?? [];
     const totalElements = result?.total_elements ?? 0;
@@ -325,16 +400,13 @@ export default function AppointmentsPage() {
                             <>
                                 <div className="space-y-3">
                                     {appointments.map((appointment, index) => (
-                                        <div
+                                        <AppointmentRow
                                             key={appointment.id}
-                                            className="animate-fade-in"
-                                            style={{ animationDelay: `${index * 30}ms` }}
-                                        >
-                                            <AppointmentRow
-                                                appointment={appointment}
-                                                variant={isAdmin ? 'admin' : 'barber'}
-                                            />
-                                        </div>
+                                            appointment={appointment}
+                                            variant={isAdmin ? 'admin' : 'barber'}
+                                            onDelete={handleDeleteClick}
+                                            index={index}
+                                        />
                                     ))}
                                 </div>
 
@@ -353,6 +425,26 @@ export default function AppointmentsPage() {
                     </div>
                 </Layout.Content>
             </Layout.Main>
+
+            <FiltersModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                initial={currentDraft}
+                onApply={handleApplyFilters}
+                isAdmin={isAdmin}
+                barbers={barbers}
+            />
+
+            <DeleteConfirmationModal
+                open={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setAppointmentToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                appointment={appointmentToDelete}
+                isDeleting={deleteAppointment.isPending}
+            />
         </Layout.Root>
     );
 }

@@ -49,4 +49,8 @@ export const appointmentService = {
         const response = await httpClient.patch<Appointment>(`/appointment/${appointmentId}`, data);
         return response.data!;
     },
+
+    delete: async (appointmentId: string): Promise<void> => {
+        await httpClient.post(`/appointment/${appointmentId}/delete`);
+    },
 };

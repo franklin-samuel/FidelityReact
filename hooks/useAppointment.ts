@@ -56,3 +56,18 @@ export const useLinkCustomerToAppointment = () => {
         },
     });
 };
+
+export const useDeleteAppointment = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (appointmentId: string) =>
+            appointmentService.delete(appointmentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [APPOINTMENT_QUERY_KEY] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        },
+    });
+};
