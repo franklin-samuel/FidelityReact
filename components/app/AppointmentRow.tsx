@@ -39,9 +39,28 @@ export function AppointmentRow({ appointment, variant, onDelete, index = 0 }: Ap
             className="animate-fade-in bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 relative"
             style={{ animationDelay: `${index * 30}ms` }}
         >
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                {/* Item info */}
-                <div className="flex items-center gap-3 min-w-0">
+            {onDelete && (
+                <div className="absolute top-4 right-4 md:hidden">
+                    <Dropdown.Root>
+                        <Dropdown.Trigger>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                        </Dropdown.Trigger>
+                        <Dropdown.Content>
+                            <Dropdown.Item variant="danger" onClick={() => onDelete(appointment)}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Deletar
+                            </Dropdown.Item>
+                        </Dropdown.Content>
+                    </Dropdown.Root>
+                </div>
+            )}
+
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 pr-8 md:pr-0">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         isService ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-blue-50 dark:bg-blue-950/30'
                     }`}>
@@ -90,7 +109,7 @@ export function AppointmentRow({ appointment, variant, onDelete, index = 0 }: Ap
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center md:justify-start">
                     <FieldItem label="Preço" value={formatCurrency(appointment.price)} />
                     <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
                     <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
@@ -101,21 +120,23 @@ export function AppointmentRow({ appointment, variant, onDelete, index = 0 }: Ap
                     />
 
                     {onDelete && (
-                        <Dropdown.Root>
-                            <Dropdown.Trigger>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                            </Dropdown.Trigger>
-                            <Dropdown.Content>
-                                <Dropdown.Item variant="danger" onClick={() => onDelete(appointment)}>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <div className="hidden md:block">
+                            <Dropdown.Root>
+                                <Dropdown.Trigger>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                     </svg>
-                                    Deletar
-                                </Dropdown.Item>
-                            </Dropdown.Content>
-                        </Dropdown.Root>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content>
+                                    <Dropdown.Item variant="danger" onClick={() => onDelete(appointment)}>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Deletar
+                                    </Dropdown.Item>
+                                </Dropdown.Content>
+                            </Dropdown.Root>
+                        </div>
                     )}
                 </div>
             </div>
