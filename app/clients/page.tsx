@@ -118,8 +118,8 @@ export default function ClientsPage() {
         e.preventDefault();
         const payload: any = {
             name: form.name,
-            email: form.email,
-            phone_number: form.phone_number,
+            email: form.email.trim() || null,
+            phone_number: form.phone_number.trim() || null,
         };
         if (form.date_of_birth) payload.date_of_birth = form.date_of_birth;
         if (form.gender) payload.gender = form.gender;
@@ -269,7 +269,7 @@ export default function ClientsPage() {
                                                             </svg>
                                                         }
                                                     >
-                                                        {customer.phone_number}
+                                                        {customer.phone_number ?? 'Não registrado'}
                                                     </CustomerCard.Info>
                                                     <CustomerCard.Info
                                                         icon={
@@ -278,7 +278,7 @@ export default function ClientsPage() {
                                                             </svg>
                                                         }
                                                     >
-                                                        {customer.email}
+                                                        {customer.email ?? "Não registrado"}
                                                     </CustomerCard.Info>
                                                 </div>
                                                 <CustomerCard.Progress current={customer.service_count} total={haircutsForFree} />
@@ -322,7 +322,6 @@ export default function ClientsPage() {
                                                         placeholder="email@exemplo.com"
                                                         value={form.email}
                                                         onChange={set('email')}
-                                                        required
                                                         disabled={creating}
                                                     />
                                                 </Input.Root>
@@ -334,7 +333,6 @@ export default function ClientsPage() {
                                                         placeholder="(00) 00000-0000"
                                                         value={form.phone_number}
                                                         onChange={set('phone_number')}
-                                                        required
                                                         disabled={creating}
                                                     />
                                                 </Input.Root>
