@@ -1,15 +1,59 @@
 import React from 'react';
 
-type SaleStep = 'select-item' | 'select-customer' | 'confirm';
+type SaleStep = 'select-item' | 'select-barber' | 'select-customer' | 'confirm';
 
 interface StepperProps {
     currentStep: SaleStep;
     onStepClick: (step: SaleStep) => void;
     canGoToStep: (step: SaleStep) => boolean;
+    isAdmin?: boolean;
 }
 
-export function Stepper({ currentStep, onStepClick, canGoToStep }: StepperProps) {
-    const steps = [
+export function Stepper({ currentStep, onStepClick, canGoToStep, isAdmin = false }: StepperProps) {
+    const adminSteps = [
+        {
+            id: 'select-item' as SaleStep,
+            label: 'Item',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+            ),
+            description: 'Selecione o serviço ou produto'
+        },
+        {
+            id: 'select-barber' as SaleStep,
+            label: 'Barbeiro',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                </svg>
+            ),
+            description: 'Qual barbeiro fez o atendimento?'
+        },
+        {
+            id: 'select-customer' as SaleStep,
+            label: 'Cliente',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            ),
+            description: 'Opcional: vincule um cliente'
+        },
+        {
+            id: 'confirm' as SaleStep,
+            label: 'Pagamento',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+            ),
+            description: 'Confirme e finalize a venda'
+        },
+    ];
+
+    const barberSteps = [
         {
             id: 'select-item' as SaleStep,
             label: 'Item',
@@ -41,6 +85,8 @@ export function Stepper({ currentStep, onStepClick, canGoToStep }: StepperProps)
             description: 'Confirme e finalize a venda'
         },
     ];
+
+    const steps = isAdmin ? adminSteps : barberSteps;
 
     const getStepIndex = (step: SaleStep) => steps.findIndex(s => s.id === step);
     const currentIndex = getStepIndex(currentStep);

@@ -13,12 +13,15 @@ import { useSearchCustomers } from '@/hooks/useCustomer';
 import { useLoyaltyStatus } from '@/hooks/useLoyalty';
 import { useRegisterServiceAppointment, useRegisterProductAppointment } from '@/hooks/useAppointment';
 import { useSettings } from '@/hooks/useSettings';
+import { useBarbers } from '@/hooks/useBarber';
+import { useAuth } from '@/hooks/useAuth';
 import type { Service } from '@/types/service';
 import type { Product } from '@/types/product';
 import type { Customer } from '@/types/customer';
+import type { Barber } from '@/types/barber';
 import type { PaymentMethod } from '@/types/appointment';
 
-type SaleStep = 'select-item' | 'select-customer' | 'confirm';
+type SaleStep = 'select-item' | 'select-barber' | 'select-customer' | 'confirm';
 type TabType = 'services' | 'products';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
@@ -32,12 +35,16 @@ const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function SalesPage() {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'ADMIN';
+
     const [tab, setTab] = useState<TabType>('services');
     const [step, setStep] = useState<SaleStep>('select-item');
     const [itemSearchTerm, setItemSearchTerm] = useState('');
 
     const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [customerSearch, setCustomerSearch] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
@@ -46,6 +53,7 @@ export default function SalesPage() {
 
     const { data: services, isLoading: loadingServices } = useServices();
     const { data: products, isLoading: loadingProducts } = useProducts();
+    const { data: barbers, isLoading: loadingBarbers } = useBarbers();
     const { data: searchResults, isLoading: searchingCustomers } = useSearchCustomers(customerSearch);
     const { mutate: registerService, isPending: registeringService } = useRegisterServiceAppointment();
     const { mutate: registerProduct, isPending: registeringProduct } = useRegisterProductAppointment();
@@ -84,8 +92,19 @@ export default function SalesPage() {
 
     const canGoToStep = (targetStep: SaleStep): boolean => {
         if (targetStep === 'select-item') return true;
-        if (targetStep === 'select-customer') return !!selectedItem;
-        if (targetStep === 'confirm') return !!selectedItem;
+        if (targetStep === 'select-barber') return !!selectedItem && isAdmin;
+        if (targetStep === 'select-customer') {
+            if (isAdmin) {
+                return !!selectedItem && !!selectedBarber;
+            }
+            return !!selectedItem;
+        }
+        if (targetStep === 'confirm') {
+            if (isAdmin) {
+                return !!selectedItem && !!selectedBarber;
+            }
+            return !!selectedItem;
+        }
         return false;
     };
 
@@ -103,6 +122,16 @@ export default function SalesPage() {
             setSelectedProduct(item as Product);
             setSelectedService(null);
         }
+
+        if (isAdmin) {
+            setStep('select-barber');
+        } else {
+            setStep('select-customer');
+        }
+    };
+
+    const handleSelectBarber = (barber: Barber) => {
+        setSelectedBarber(barber);
         setStep('select-customer');
     };
 
@@ -120,6 +149,7 @@ export default function SalesPage() {
     const handleConfirm = () => {
         if (isService && selectedService) {
             registerService({
+                barber_id: isAdmin ? selectedBarber?.id : undefined,
                 service_id: selectedService.id,
                 payment_method: paymentMethod,
                 customer_id: selectedCustomer?.id,
@@ -132,6 +162,7 @@ export default function SalesPage() {
             });
         } else if (selectedProduct) {
             registerProduct({
+                barber_id: isAdmin ? selectedBarber?.id : undefined,
                 product_id: selectedProduct.id,
                 payment_method: paymentMethod,
                 customer_id: selectedCustomer?.id,
@@ -148,6 +179,7 @@ export default function SalesPage() {
     const resetAll = () => {
         setSelectedService(null);
         setSelectedProduct(null);
+        setSelectedBarber(null);
         setSelectedCustomer(null);
         setCustomerSearch('');
         setItemSearchTerm('');
@@ -160,6 +192,7 @@ export default function SalesPage() {
         setTab(newTab);
         setSelectedService(null);
         setSelectedProduct(null);
+        setSelectedBarber(null);
         setSelectedCustomer(null);
         setItemSearchTerm('');
         setStep('select-item');
@@ -180,6 +213,7 @@ export default function SalesPage() {
                             currentStep={step}
                             onStepClick={goToStep}
                             canGoToStep={canGoToStep}
+                            isAdmin={isAdmin}
                         />
 
                         {step === 'select-item' && (
@@ -312,7 +346,59 @@ export default function SalesPage() {
                                     </div>
                                 )}
 
-                                {/* STEP 2: Selecionar Cliente */}
+                                {/* STEP 2: Selecionar Barbeiro (só para ADMIN) */}
+                                {step === 'select-barber' && isAdmin && (
+                                    <div className="space-y-4 animate-fade-in">
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+                                                Selecione o Barbeiro
+                                            </h2>
+                                            <p className="text-sm text-zinc-500">
+                                                Qual barbeiro realizou este atendimento?
+                                            </p>
+                                        </div>
+
+                                        {loadingBarbers ? (
+                                            <div className="space-y-3">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="h-16 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                                                ))}
+                                            </div>
+                                        ) : !barbers || barbers.length === 0 ? (
+                                            <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-900 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800">
+                                                <p className="text-zinc-600 dark:text-zinc-400">
+                                                    Nenhum barbeiro cadastrado
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {barbers.map((barber, index) => (
+                                                    <button
+                                                        key={barber.id}
+                                                        onClick={() => handleSelectBarber(barber)}
+                                                        className="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md hover:-translate-y-0.5 animate-fade-in"
+                                                        style={{ animationDelay: `${index * 30}ms` }}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-lg flex-shrink-0">
+                                                                {barber.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-semibold text-zinc-900 dark:text-zinc-50">{barber.name}</p>
+                                                                <p className="text-sm text-zinc-500 dark:text-zinc-400">{barber.email}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-xs text-zinc-400">
+                                                            Selecionar →
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* STEP 3: Selecionar Cliente */}
                                 {step === 'select-customer' && (
                                     <div className="space-y-4 animate-fade-in">
                                         <div>
@@ -388,7 +474,7 @@ export default function SalesPage() {
                                     </div>
                                 )}
 
-                                {/* STEP 3: Confirmar */}
+                                {/* STEP 4: Confirmar */}
                                 {step === 'confirm' && (
                                     <div className="space-y-4 animate-fade-in">
                                         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -410,6 +496,22 @@ export default function SalesPage() {
                                                     </button>
                                                 </div>
 
+                                                {isAdmin && selectedBarber && (
+                                                    <div className="flex items-start justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                                                        <div className="flex-1">
+                                                            <p className="text-xs text-zinc-400 mb-1">Barbeiro</p>
+                                                            <p className="font-semibold text-zinc-900 dark:text-zinc-50">{selectedBarber.name}</p>
+                                                            <p className="text-sm text-zinc-500">{selectedBarber.email}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => goToStep('select-barber')}
+                                                            className="text-xs text-amber-500 hover:text-amber-600"
+                                                        >
+                                                            Alterar
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 <div className="flex items-start justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
                                                     <div className="flex-1">
                                                         <p className="text-xs text-zinc-400 mb-1">Cliente</p>
@@ -419,7 +521,7 @@ export default function SalesPage() {
                                                                 <p className="text-sm text-zinc-500">{selectedCustomer.phone_number}</p>
                                                             </>
                                                         ) : (
-                                                            <p className="text-sm text-zinc-400">Sem cliente vinculado</p>
+                                                            <p className="text-sm text-zinc-400 italic">Sem cliente vinculado</p>
                                                         )}
                                                     </div>
                                                     <button
@@ -588,6 +690,20 @@ export default function SalesPage() {
                                             )}
                                         </div>
 
+                                        {isAdmin && (
+                                            <div>
+                                                <p className="text-xs text-zinc-400 mb-2">Barbeiro</p>
+                                                {selectedBarber ? (
+                                                    <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                                                        <p className="font-medium text-zinc-900 dark:text-zinc-50 text-sm">{selectedBarber.name}</p>
+                                                        <p className="text-xs text-zinc-500 mt-1">{selectedBarber.email}</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-zinc-400 italic">Nenhum barbeiro selecionado</p>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div>
                                             <p className="text-xs text-zinc-400 mb-2">Cliente</p>
                                             {selectedCustomer ? (
@@ -615,7 +731,7 @@ export default function SalesPage() {
                                             <Button.Root
                                                 className="w-full"
                                                 onClick={() => setIsConfirmOpen(true)}
-                                                disabled={!selectedItem}
+                                                disabled={!selectedItem || (isAdmin && !selectedBarber)}
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -653,6 +769,12 @@ export default function SalesPage() {
                                             <span className="text-zinc-600 dark:text-zinc-400">Item</span>
                                             <span className="font-medium text-zinc-900 dark:text-zinc-50">{selectedItem?.name}</span>
                                         </div>
+                                        {isAdmin && selectedBarber && (
+                                            <div className="flex justify-between">
+                                                <span className="text-zinc-600 dark:text-zinc-400">Barbeiro</span>
+                                                <span className="font-medium text-zinc-900 dark:text-zinc-50">{selectedBarber.name}</span>
+                                            </div>
+                                        )}
                                         {selectedCustomer && (
                                             <div className="flex justify-between">
                                                 <span className="text-zinc-600 dark:text-zinc-400">Cliente</span>

@@ -49,6 +49,7 @@ export interface AppointmentFilters {
 }
 
 export interface RegisterServiceAppointmentRequest {
+    barber_id?: string
     payment_method: PaymentMethod;
     customer_id?: string;
     service_id: string;
@@ -56,6 +57,7 @@ export interface RegisterServiceAppointmentRequest {
 }
 
 export interface RegisterProductAppointmentRequest {
+    barber_id?: string;
     payment_method: PaymentMethod;
     customer_id?: string;
     product_id: string;
