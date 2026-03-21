@@ -14,6 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppointmentFilters, AppointmentType, PaymentMethod } from '@/types/appointment';
 import type { Appointment } from '@/types/appointment';
+import { DailyReportModal } from '@/components/app/DailyReportModal';
+import { useDailyReport } from '@/hooks/useDailyReport';
 
 const SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -298,6 +300,8 @@ export default function AppointmentsPage() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
     const debouncedSearch = useDebounce(searchInput, 400);
+    const [isDailyReportOpen, setIsDailyReportOpen] = useState(false);
+    const { data: dailyReportData, isLoading: loadingDailyReport, refetch: refetchDailyReport } = useDailyReport(isDailyReportOpen);
 
     const { user } = useAuth();
     const isAdmin = user?.role === 'ADMIN';
@@ -340,6 +344,11 @@ export default function AppointmentsPage() {
         }
     }, [appointmentToDelete, deleteAppointment]);
 
+    const handleOpenDailyReport = useCallback(() => {
+        setIsDailyReportOpen(true);
+        refetchDailyReport();
+    }, [refetchDailyReport]);
+
     const appointments = result?.content ?? [];
     const totalElements = result?.total_elements ?? 0;
     const totalPages = result?.total_pages ?? 1;
@@ -372,6 +381,18 @@ export default function AppointmentsPage() {
                         <Layout.Header
                             title={isAdmin ? 'Atendimentos' : 'Meus Atendimentos'}
                             description={isAdmin ? 'Histórico completo de atendimentos' : 'Seu histórico de atendimentos'}
+                            actions={
+                                isAdmin && (
+                                    <Button.Root onClick={handleOpenDailyReport}>
+                                        <Button.Icon>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                        </Button.Icon>
+                                        Gerar Relatório Diário
+                                    </Button.Root>
+                                )
+                            }
                         />
                         {/* Results */}
                         {isLoading ? (
@@ -424,6 +445,12 @@ export default function AppointmentsPage() {
                         )}
                     </div>
                 </Layout.Content>
+                <DailyReportModal
+                    isOpen={isDailyReportOpen}
+                    onClose={() => setIsDailyReportOpen(false)}
+                    data={dailyReportData ?? null}
+                    isLoading={loadingDailyReport}
+                />
             </Layout.Main>
 
             <FiltersModal

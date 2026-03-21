@@ -84,6 +84,21 @@ body {
         }
     }
 
+    @keyframes slide-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .animate-slide-in-up {
+        animation: slide-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     /* Pulse Animation - Mais suave */
     .animate-pulse-soft {
         animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
