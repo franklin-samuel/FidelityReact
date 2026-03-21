@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { formatCurrency } from '@/utils/formatter';
+import { formatCurrency, getPaymentMethodLabel } from '@/utils/formatter';
 import { Dropdown } from '@/components/ui/Dropdown';
 import type { Appointment } from '@/types/appointment';
 
@@ -9,11 +9,12 @@ interface FieldItemProps {
     label: string;
     value: string;
     highlight?: boolean;
+    width?: string;
 }
 
-function FieldItem({ label, value, highlight }: FieldItemProps) {
+function FieldItem({ label, value, highlight, width = 'w-20' }: FieldItemProps) {
     return (
-        <div className="text-center">
+        <div className={`text-center ${width}`}>
             <p className="text-xs text-zinc-400">{label}</p>
             <p className={`font-medium text-sm ${highlight ? 'text-green-600 dark:text-green-400 font-bold' : 'text-zinc-900 dark:text-zinc-50'}`}>
                 {value}
@@ -110,13 +111,15 @@ export function AppointmentRow({ appointment, variant, onDelete, index = 0 }: Ap
                 </div>
 
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center md:justify-start">
-                    <FieldItem label="Preço" value={formatCurrency(appointment.price)} />
-                    <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} />
-                    <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} />
+                    <FieldItem label="Preço" value={formatCurrency(appointment.price)} width="w-20" />
+                    <FieldItem label="Comissão" value={`${appointment.commission_percentage}%`} width="w-20" />
+                    <FieldItem label="Gorjeta" value={formatCurrency(appointment.tip ?? 0)} width="w-20" />
+                    <FieldItem label="Método" value={getPaymentMethodLabel(appointment.payment_method)} width="w-20" />
                     <FieldItem
                         label={variant === 'admin' ? 'Ganho Barbearia' : 'Meu Ganho'}
                         value={formatCurrency(variant === 'admin' ? (appointment.barbershop_revenue ?? 0) : (appointment.barber_total ?? 0))}
                         highlight={true}
+                        width="w-28"
                     />
 
                     {onDelete && (
