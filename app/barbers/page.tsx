@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/app/Sidebar';
 import { Layout } from '@/components/app/Layout';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +14,7 @@ import { ptBR } from 'date-fns/locale';
 import type { Barber } from '@/types/barber';
 
 export default function BarbersPage() {
+    const router = useRouter();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deletingBarber, setDeletingBarber] = useState<Barber | null>(null);
@@ -105,6 +107,16 @@ export default function BarbersPage() {
                                                     </svg>
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content>
+                                                    <Dropdown.Item
+                                                        onClick={() => router.push(`/barbers/${barber.id}`)}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        Ver Detalhes
+                                                    </Dropdown.Item>
+                                                    <Dropdown.Separator />
                                                     <Dropdown.Item
                                                         variant="danger"
                                                         onClick={() => { setDeletingBarber(barber); setIsDeleteModalOpen(true); }}
